@@ -1,0 +1,107 @@
+version: "3.9"
+
+# ============================================================
+# BookFlow — Local Development Stack
+# ============================================================
+# Usage:
+#   docker compose up          → start all services
+#   docker compose up -d       → start in background
+#   docker compose down -v     → stop and remove volumes
+# ============================================================
+
+services:
+  # ============================================================
+  # PostgreSQL
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: bookflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bookflow
+      POSTGRES_PASSWORD: bookflow_secret
+      POSTGRES_DB: bookflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookflow -d bookflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Redis (for caching and rate limiting)
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: bookflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass bookflow_redis_secret
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "bookflow_redis_secret", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # BookFlow Web App
+  # ============================================================
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: bookflow-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://bookflow:bookflow_secret@postgres:5432/bookflow
+      REDIS_URL: redis://:bookflow_redis_secret@redis:6379
+      NODE_ENV: production
+    env_file:
+      - .env.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================
+  # Database Migrations (runs once on startup)
+  # ============================================================
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: builder
+    container_name: bookflow-migrate
+    command: npx prisma migrate deploy --schema=./packages/database/prisma/schema.prisma
+    environment:
+      DATABASE_URL: postgresql://bookflow:bookflow_secret@postgres:5432/bookflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: bookflow-network

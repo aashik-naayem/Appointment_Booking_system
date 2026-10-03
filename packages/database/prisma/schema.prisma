@@ -1,0 +1,820 @@
+// BookFlow - Prisma Schema
+// Multi-tenant SaaS Booking Platform
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum SubscriptionPlan {
+  STARTER
+  PRO
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  IN_APP
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_REMINDER
+  BOOKING_CANCELLATION
+  BOOKING_RESCHEDULED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  REVIEW_REQUEST
+  STAFF_NEW_BOOKING
+  STAFF_CANCELLATION
+  WELCOME
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  IMPERSONATE
+  EXPORT
+  IMPORT
+  STRIPE_WEBHOOK
+  API_CALL
+}
+
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CustomerStatus {
+  ACTIVE
+  BLACKLISTED
+  VIP
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+// ============================================================
+// TENANT (Business)
+// ============================================================
+
+model Tenant {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+
+  // Branding
+  logoUrl    String?
+  faviconUrl String?
+  primaryColor   String  @default("#6366f1")
+  secondaryColor String  @default("#f59e0b")
+  accentColor    String  @default("#10b981")
+  coverImageUrl  String?
+
+  // Contact
+  email       String?
+  phone       String?
+  website     String?
+  address     String?
+  city        String?
+  state       String?
+  country     String  @default("US")
+  postalCode  String?
+
+  // Configuration
+  timezone          String   @default("UTC")
+  currency          String   @default("USD")
+  locale            String   @default("en")
+  bookingLeadTime   Int      @default(60)   // minutes before slot can be booked
+  bookingWindowDays Int      @default(60)   // days into future bookings allowed
+  cancellationHours Int      @default(24)   // hours before appointment to cancel
+  requireDeposit    Boolean  @default(false)
+  depositPercentage Decimal  @default(0) @db.Decimal(5, 2)
+  autoConfirm       Boolean  @default(true)
+  allowGuestBooking Boolean  @default(true)
+  customDomain      String?  @unique
+  isPublic          Boolean  @default(true)
+  isActive          Boolean  @default(true)
+
+  // Subscription
+  stripeCustomerId String? @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  users            User[]
+  staff            Staff[]
+  services         Service[]
+  customers        Customer[]
+  appointments     Appointment[]
+  businessHours    BusinessHours[]
+  holidays         Holiday[]
+  notifications    Notification[]
+  subscription     Subscription?
+  payments         Payment[]
+  auditLogs        AuditLog[]
+  apiKeys          ApiKey[]
+  featureFlags     FeatureFlag[]
+  notificationPrefs NotificationPreference[]
+
+  @@index([slug])
+  @@index([stripeCustomerId])
+  @@index([customDomain])
+}
+
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  password      String?   // hashed - null for OAuth users
+  role          UserRole  @default(STAFF)
+
+  // Tenant link
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  // Profile
+  phone     String?
+  bio       String?
+  timezone  String?
+  locale    String  @default("en")
+
+  // Security
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  failedLoginCount  Int       @default(0)
+  lockedUntil       DateTime?
+  mustChangePassword Boolean  @default(false)
+
+  // OAuth
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  staff              Staff?
+  auditLogs          AuditLog[]
+  notificationsAsRecipient Notification[] @relation("NotificationRecipient")
+
+  @@index([email])
+  @@index([tenantId])
+}
+
+// Auth.js models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// STAFF
+// ============================================================
+
+model Staff {
+  id       String      @id @default(cuid())
+  tenantId String
+  tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String?     @unique
+  user     User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name        String
+  email       String
+  phone       String?
+  bio         String?
+  avatarUrl   String?
+  title       String?   // e.g. "Senior Stylist", "Doctor"
+  status      StaffStatus @default(ACTIVE)
+  color       String?   // calendar display color
+  commission  Decimal   @default(0) @db.Decimal(5, 2) // percentage
+
+  // Working hours override (if different from business hours)
+  hasCustomHours Boolean @default(false)
+
+  // Google Calendar
+  calendarConnections CalendarConnection[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  appointments  Appointment[]
+  workingHours  StaffWorkingHours[]
+  services      StaffService[]      // services this staff can perform
+  notifications Notification[]
+
+  @@index([tenantId])
+  @@index([email])
+}
+
+model StaffWorkingHours {
+  id        String    @id @default(cuid())
+  staffId   String
+  staff     Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  dayOfWeek DayOfWeek
+  startTime String    // "HH:mm" format
+  endTime   String    // "HH:mm" format
+  isWorking Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([staffId, dayOfWeek])
+  @@index([staffId])
+}
+
+// Staff-Service junction (which staff can perform which services)
+model StaffService {
+  id        String  @id @default(cuid())
+  staffId   String
+  staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, serviceId])
+  @@index([staffId])
+  @@index([serviceId])
+}
+
+// ============================================================
+// SERVICE
+// ============================================================
+
+model Service {
+  id          String  @id @default(cuid())
+  tenantId    String
+  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  name          String
+  description   String?
+  imageUrl      String?
+  duration      Int       // minutes
+  bufferTime    Int       @default(0)  // minutes after appointment
+  price         Decimal   @db.Decimal(10, 2)
+  depositAmount Decimal?  @db.Decimal(10, 2) // override tenant setting
+  maxConcurrent Int       @default(1) // simultaneous appointments allowed
+  isActive      Boolean   @default(true)
+  requiresStaff Boolean   @default(true)
+  sortOrder     Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  appointments Appointment[]
+  staff        StaffService[]
+
+  @@index([tenantId])
+  @@index([categoryId])
+}
+
+model ServiceCategory {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  color       String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+
+  services  Service[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+// ============================================================
+// CUSTOMER
+// ============================================================
+
+model Customer {
+  id       String         @id @default(cuid())
+  tenantId String
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String?        // if customer has an account
+
+  name           String
+  email          String
+  phone          String?
+  notes          String?  @db.Text
+  status         CustomerStatus @default(ACTIVE)
+  blacklistReason String?
+
+  // Stats (denormalized for performance)
+  totalBookings    Int     @default(0)
+  completedBookings Int    @default(0)
+  noShowCount      Int     @default(0)
+  totalSpent       Decimal @default(0) @db.Decimal(10, 2)
+  lastVisitAt      DateTime?
+
+  // Marketing
+  allowMarketing    Boolean @default(true)
+  preferredChannel  NotificationChannel @default(EMAIL)
+
+  stripeCustomerId String? @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  appointments  Appointment[]
+  notifications Notification[]
+  payments      Payment[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+// ============================================================
+// APPOINTMENT
+// ============================================================
+
+model Appointment {
+  id         String  @id @default(cuid())
+  tenantId   String
+  tenant     Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service @relation(fields: [serviceId], references: [id])
+  staffId    String?
+  staff      Staff?  @relation(fields: [staffId], references: [id])
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Scheduling
+  startTime     DateTime
+  endTime       DateTime
+  timezone      String      // store original timezone
+  duration      Int         // minutes (snapshot at booking time)
+
+  // Status
+  status        AppointmentStatus @default(PENDING)
+  cancelledAt   DateTime?
+  cancelledBy   String?     // userId
+  cancellationReason String?
+  noShowAt      DateTime?
+  completedAt   DateTime?
+  confirmedAt   DateTime?
+
+  // Pricing (snapshot at booking time)
+  servicePrice  Decimal    @db.Decimal(10, 2)
+  depositAmount Decimal    @default(0) @db.Decimal(10, 2)
+  totalAmount   Decimal    @db.Decimal(10, 2)
+  discount      Decimal    @default(0) @db.Decimal(10, 2)
+
+  // Customer info
+  customerNotes    String?  @db.Text
+  internalNotes    String?  @db.Text
+
+  // Identifiers for public access
+  bookingReference String  @unique @default(cuid())
+
+  // Rescheduled from
+  rescheduledFromId String?
+  rescheduledFrom   Appointment?  @relation("RescheduleChain", fields: [rescheduledFromId], references: [id])
+  rescheduledTo     Appointment[] @relation("RescheduleChain")
+
+  // Calendar
+  calendarEventId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  payment       Payment?
+  notifications Notification[]
+
+  @@index([tenantId])
+  @@index([staffId])
+  @@index([customerId])
+  @@index([serviceId])
+  @@index([startTime])
+  @@index([status])
+  @@index([bookingReference])
+  @@index([tenantId, startTime]) // compound for availability queries
+  @@index([tenantId, staffId, startTime]) // compound for staff availability
+}
+
+// ============================================================
+// BUSINESS HOURS
+// ============================================================
+
+model BusinessHours {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  dayOfWeek DayOfWeek
+  startTime String    // "HH:mm"
+  endTime   String    // "HH:mm"
+  isOpen    Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, dayOfWeek])
+  @@index([tenantId])
+}
+
+model Holiday {
+  id       String  @id @default(cuid())
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name      String
+  date      DateTime @db.Date
+  recurring Boolean  @default(false) // annual recurrence
+  isAllDay  Boolean  @default(true)
+  startTime String?  // if partial day
+  endTime   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, date])
+}
+
+// ============================================================
+// SUBSCRIPTION
+// ============================================================
+
+model Subscription {
+  id       String @id @default(cuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  stripeSubscriptionId String             @unique
+  stripeCustomerId     String
+  stripePriceId        String
+  stripeProductId      String
+
+  plan      SubscriptionPlan
+  status    SubscriptionStatus
+  interval  String             // "month" | "year"
+
+  trialStart     DateTime?
+  trialEnd       DateTime?
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  canceledAt         DateTime?
+  endedAt            DateTime?
+
+  // Grace period after failed payment
+  gracePeriodEnd DateTime?
+
+  // Limits (cached from plan)
+  maxStaff      Int?
+  maxBookings   Int?  // per month
+
+  // Monthly usage (reset each period)
+  bookingsThisMonth Int @default(0)
+  periodResetAt DateTime?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stripeSubscriptionId])
+  @@index([stripeCustomerId])
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+
+model Payment {
+  id             String  @id @default(cuid())
+  tenantId       String
+  tenant         Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointmentId  String? @unique
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id])
+  customerId     String?
+  customer       Customer?    @relation(fields: [customerId], references: [id])
+
+  stripePaymentIntentId  String?  @unique
+  stripeChargeId         String?
+  stripeRefundId         String?
+
+  amount         Decimal @db.Decimal(10, 2)
+  currency       String  @default("USD")
+  status         PaymentStatus @default(PENDING)
+  description    String?
+
+  paidAt         DateTime?
+  refundedAt     DateTime?
+  refundAmount   Decimal? @db.Decimal(10, 2)
+  failureReason  String?
+
+  metadata       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([stripePaymentIntentId])
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id            String  @id @default(cuid())
+  tenantId      String
+  tenant        Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  customerId    String?
+  customer      Customer?    @relation(fields: [customerId], references: [id])
+  staffId       String?
+  staff         Staff?       @relation(fields: [staffId], references: [id])
+  recipientUserId String?
+  recipientUser   User?      @relation("NotificationRecipient", fields: [recipientUserId], references: [id])
+
+  type       NotificationType
+  channel    NotificationChannel
+  status     NotificationStatus @default(PENDING)
+
+  recipient  String  // email or phone number
+  subject    String?
+  body       String  @db.Text
+
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  failedAt     DateTime?
+  failureReason String?
+  retryCount   Int     @default(0)
+  maxRetries   Int     @default(3)
+
+  // External IDs
+  externalId   String? // provider message ID
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([appointmentId])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model NotificationPreference {
+  id       String  @id @default(cuid())
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type               NotificationType
+  channel            NotificationChannel
+  enabled            Boolean  @default(true)
+  hoursBeforeReminder Int?    // for reminder types
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, type, channel])
+  @@index([tenantId])
+}
+
+// ============================================================
+// CALENDAR INTEGRATION
+// ============================================================
+
+model CalendarConnection {
+  id      String @id @default(cuid())
+  staffId String
+  staff   Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  provider     String  @default("google") // "google" | "outlook"
+  calendarId   String?
+  calendarName String?
+
+  // Encrypted OAuth tokens
+  accessToken      String  @db.Text
+  refreshToken     String? @db.Text
+  tokenExpiry      DateTime?
+  scope            String?
+
+  isActive     Boolean  @default(true)
+  lastSyncAt   DateTime?
+  syncError    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([staffId, provider])
+  @@index([staffId])
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id       String  @id @default(cuid())
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action       AuditAction
+  resource     String      // table/entity name
+  resourceId   String?
+  description  String
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
+  severity     String      @default("info") // "info" | "warning" | "critical"
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// API KEYS (Business plan)
+// ============================================================
+
+model ApiKey {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  keyHash     String    @unique // hashed key
+  keyPrefix   String    // first 8 chars for identification (e.g., "bk_live_")
+  status      ApiKeyStatus @default(ACTIVE)
+  scopes      String[]  // ["bookings:read", "bookings:write", etc.]
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  revokedBy   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([keyHash])
+}
+
+// ============================================================
+// FEATURE FLAGS
+// ============================================================
+
+model FeatureFlag {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name      String
+  enabled   Boolean @default(false)
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
