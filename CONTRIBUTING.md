@@ -14,16 +14,19 @@
 ## Code Standards
 
 ### TypeScript
+
 - Strict mode enabled — no `any` without justification
 - All functions must have typed parameters and return types
 - Use `const` and arrow functions for utilities
 
 ### Security
+
 - **Never** put `tenantId` in URL params — always from session
 - **Always** call `requireTenant()` or `requireAuth()` in route handlers
 - **Always** use Zod to validate external input before using it
 
 ### Architecture
+
 - Business logic goes in `lib/services/`, not in route handlers
 - Route handlers should be under ~50 lines
 - Use `handleApiError()` for consistent error responses

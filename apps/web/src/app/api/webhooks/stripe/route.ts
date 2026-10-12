@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       data: {
         eventId: event.id,
         type: event.type,
-        payload: event.data.object as Record<string, unknown>,
+        payload: event.data.object as unknown as Record<string, unknown>,
       },
     });
   } catch (err) {

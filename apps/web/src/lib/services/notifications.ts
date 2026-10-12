@@ -4,7 +4,12 @@
  * All notification sending is done via background jobs.
  */
 
-import { prisma, NotificationChannel, NotificationStatus, NotificationType } from "@bookflow/database";
+import {
+  prisma,
+  NotificationChannel,
+  NotificationStatus,
+  NotificationType,
+} from "@bookflow/database";
 import { Resend } from "resend";
 import twilio from "twilio";
 
@@ -35,7 +40,11 @@ export async function sendNotification(notificationId: string): Promise<void> {
 
     switch (notification.channel) {
       case NotificationChannel.EMAIL:
-        await sendEmail(notification.recipient, notification.subject ?? "Notification", notification.body);
+        await sendEmail(
+          notification.recipient,
+          notification.subject ?? "Notification",
+          notification.body,
+        );
         break;
       case NotificationChannel.SMS:
         await sendSms(notification.recipient, notification.body);
@@ -93,9 +102,11 @@ export async function createBookingConfirmationNotifications(appointmentId: stri
   const { tenant, service, staff, customer } = appointment;
 
   // Customer email confirmation
-  const emailEnabled = tenant.notificationPrefs.find(
-    (p) => p.type === NotificationType.BOOKING_CONFIRMATION && p.channel === NotificationChannel.EMAIL,
-  )?.enabled !== false;
+  const emailEnabled =
+    tenant.notificationPrefs.find(
+      (p) =>
+        p.type === NotificationType.BOOKING_CONFIRMATION && p.channel === NotificationChannel.EMAIL,
+    )?.enabled !== false;
 
   if (emailEnabled && customer.email) {
     await prisma.notification.create({
@@ -117,7 +128,8 @@ export async function createBookingConfirmationNotifications(appointmentId: stri
   // SMS if customer has phone and tenant has SMS enabled
   if (customer.phone) {
     const smsEnabled = tenant.notificationPrefs.find(
-      (p) => p.type === NotificationType.BOOKING_CONFIRMATION && p.channel === NotificationChannel.SMS,
+      (p) =>
+        p.type === NotificationType.BOOKING_CONFIRMATION && p.channel === NotificationChannel.SMS,
     )?.enabled;
 
     if (smsEnabled) {
@@ -162,6 +174,7 @@ export async function scheduleBookingReminders(appointmentId: string) {
     include: {
       tenant: { include: { notificationPrefs: true } },
       customer: true,
+      service: { select: { name: true } },
     },
   });
 
@@ -336,7 +349,12 @@ function buildBookingConfirmationSmsBody(appointment: {
 }
 
 function buildReminderBody(
-  appointment: { startTime: Date; timezone: string; service: { name: string }; tenant: { name: string } },
+  appointment: {
+    startTime: Date;
+    timezone: string;
+    service: { name: string };
+    tenant: { name: string };
+  },
   hoursBeforeReminder: number,
 ): string {
   const formattedTime = appointment.startTime.toLocaleString("en-US", {

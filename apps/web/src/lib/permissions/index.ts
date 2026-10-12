@@ -58,9 +58,9 @@ export async function requireAuth(options?: RequireAuthOptions): Promise<AuthCon
 /**
  * Get authenticated session with tenant. Throws if not authenticated or no tenant.
  */
-export async function requireTenant(options?: RequireAuthOptions): Promise<
-  AuthContext & { tenant: Tenant }
-> {
+export async function requireTenant(
+  options?: RequireAuthOptions,
+): Promise<AuthContext & { tenant: Tenant }> {
   const ctx = await requireAuth(options);
 
   if (!ctx.user.tenantId) {
@@ -76,7 +76,7 @@ export async function requireTenant(options?: RequireAuthOptions): Promise<
   }
 
   if (!tenant.isActive) {
-    redirect("/dashboard/suspended");
+    redirect("/suspended");
   }
 
   return { ...ctx, tenant };
@@ -199,7 +199,7 @@ export async function requireOwnedResource<T extends { tenantId: string }>(
   tenantId: string,
 ): Promise<T> {
   if (!resource || resource.tenantId !== tenantId) {
-    throw new NotFoundError("Resource not found");
+    throw new NotFoundError();
   }
   return resource;
 }
@@ -212,7 +212,14 @@ import { SubscriptionPlan } from "@bookflow/database";
 
 export async function checkSubscriptionFeature(
   tenantId: string,
-  feature: "sms" | "whatsapp" | "advanced_analytics" | "custom_branding" | "api_access" | "white_label" | "unlimited_staff",
+  feature:
+    | "sms"
+    | "whatsapp"
+    | "advanced_analytics"
+    | "custom_branding"
+    | "api_access"
+    | "white_label"
+    | "unlimited_staff",
 ): Promise<boolean> {
   const subscription = await prisma.subscription.findUnique({
     where: { tenantId },

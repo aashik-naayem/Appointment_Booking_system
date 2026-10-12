@@ -17,6 +17,8 @@ declare module "next-auth" {
   interface User {
     role?: UserRole;
     tenantId?: string | null;
+    /** ms timestamp of the last time role/tenant were re-read from the database */
+    refreshedAt?: number;
   }
 }
 
@@ -25,5 +27,7 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: UserRole;
     tenantId?: string | null;
+    /** ms timestamp of the last time role/tenant were re-read from the database */
+    refreshedAt?: number;
   }
 }

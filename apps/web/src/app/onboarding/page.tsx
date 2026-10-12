@@ -56,7 +56,7 @@ export default function OnboardingPage() {
       setStep("services");
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
-        ? (err.response?.data as { error?: string })?.error ?? "Failed to create business"
+        ? ((err.response?.data as { error?: string })?.error ?? "Failed to create business")
         : "Something went wrong";
       toast.error(message);
     } finally {
@@ -95,7 +95,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 dark:from-slate-900 dark:to-slate-800">
       <div className="w-full max-w-lg">
         {/* Progress */}
         <div className="mb-8 flex justify-center gap-2">
@@ -103,7 +103,7 @@ export default function OnboardingPage() {
             <div
               key={s}
               className={`h-2 w-16 rounded-full transition-colors ${
-                s === step || (i < ["business", "services", "staff", "done"].indexOf(step))
+                s === step || i < ["business", "services", "staff", "done"].indexOf(step)
                   ? "bg-primary"
                   : "bg-muted"
               }`}
@@ -111,30 +111,35 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="border-border bg-card rounded-xl border shadow-sm">
           {/* Business setup */}
           {step === "business" && (
             <div className="p-8">
               <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <Building2 className="h-5 w-5 text-primary" />
+                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
+                  <Building2 className="text-primary h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-lg">Set up your business</h2>
-                  <p className="text-sm text-muted-foreground">Tell us about your business</p>
+                  <h2 className="text-lg font-bold">Set up your business</h2>
+                  <p className="text-muted-foreground text-sm">Tell us about your business</p>
                 </div>
               </div>
 
-              <form onSubmit={businessForm.handleSubmit(handleBusinessSubmit)} className="space-y-4">
+              <form
+                onSubmit={businessForm.handleSubmit(handleBusinessSubmit)}
+                className="space-y-4"
+              >
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Business Name *</label>
                   <input
                     {...businessForm.register("name")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Jane's Hair Salon"
                   />
                   {businessForm.formState.errors.name && (
-                    <p className="mt-1 text-xs text-destructive">{businessForm.formState.errors.name.message}</p>
+                    <p className="text-destructive mt-1 text-xs">
+                      {businessForm.formState.errors.name.message}
+                    </p>
                   )}
                 </div>
 
@@ -143,7 +148,7 @@ export default function OnboardingPage() {
                   <textarea
                     {...businessForm.register("description")}
                     rows={2}
-                    className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Brief description of your business..."
                   />
                 </div>
@@ -154,7 +159,7 @@ export default function OnboardingPage() {
                     <input
                       {...businessForm.register("phone")}
                       type="tel"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                       placeholder="+1 (555) 000-0000"
                     />
                   </div>
@@ -162,7 +167,7 @@ export default function OnboardingPage() {
                     <label className="mb-1.5 block text-sm font-medium">City</label>
                     <input
                       {...businessForm.register("city")}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                       placeholder="New York"
                     />
                   </div>
@@ -171,9 +176,13 @@ export default function OnboardingPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-4 w-4" />
+                  )}
                   Continue
                 </button>
               </form>
@@ -184,12 +193,12 @@ export default function OnboardingPage() {
           {step === "services" && (
             <div className="p-8">
               <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <Scissors className="h-5 w-5 text-primary" />
+                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
+                  <Scissors className="text-primary h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-lg">Add your first service</h2>
-                  <p className="text-sm text-muted-foreground">What services do you offer?</p>
+                  <h2 className="text-lg font-bold">Add your first service</h2>
+                  <p className="text-muted-foreground text-sm">What services do you offer?</p>
                 </div>
               </div>
 
@@ -198,7 +207,7 @@ export default function OnboardingPage() {
                   <label className="mb-1.5 block text-sm font-medium">Service Name *</label>
                   <input
                     {...serviceForm.register("name")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Haircut & Style"
                   />
                 </div>
@@ -210,7 +219,7 @@ export default function OnboardingPage() {
                       {...serviceForm.register("duration", { valueAsNumber: true })}
                       type="number"
                       min="5"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     />
                   </div>
                   <div>
@@ -220,7 +229,7 @@ export default function OnboardingPage() {
                       type="number"
                       min="0"
                       step="0.01"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     />
                   </div>
                 </div>
@@ -229,7 +238,7 @@ export default function OnboardingPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                     Add Service
@@ -237,7 +246,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={skipStep}
-                    className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
+                    className="border-border hover:bg-accent rounded-lg border px-4 py-2.5 text-sm font-medium"
                   >
                     Skip
                   </button>
@@ -250,12 +259,12 @@ export default function OnboardingPage() {
           {step === "staff" && (
             <div className="p-8">
               <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
+                  <Users className="text-primary h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-lg">Add your first team member</h2>
-                  <p className="text-sm text-muted-foreground">Who will be taking appointments?</p>
+                  <h2 className="text-lg font-bold">Add your first team member</h2>
+                  <p className="text-muted-foreground text-sm">Who will be taking appointments?</p>
                 </div>
               </div>
 
@@ -265,7 +274,7 @@ export default function OnboardingPage() {
                     <label className="mb-1.5 block text-sm font-medium">Name *</label>
                     <input
                       {...staffForm.register("name")}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                       placeholder="Jane Smith"
                     />
                   </div>
@@ -274,7 +283,7 @@ export default function OnboardingPage() {
                     <input
                       {...staffForm.register("email")}
                       type="email"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                       placeholder="jane@example.com"
                     />
                   </div>
@@ -284,7 +293,7 @@ export default function OnboardingPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                     Add Staff
@@ -292,7 +301,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={skipStep}
-                    className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
+                    className="border-border hover:bg-accent rounded-lg border px-4 py-2.5 text-sm font-medium"
                   >
                     Skip
                   </button>
@@ -308,11 +317,11 @@ export default function OnboardingPage() {
                 <CheckCircle2 className="h-8 w-8 text-green-600" />
               </div>
               <h2 className="text-xl font-bold">You&apos;re all set!</h2>
-              <p className="mt-2 text-muted-foreground">
+              <p className="text-muted-foreground mt-2">
                 Your business is ready. Let&apos;s go to your dashboard.
               </p>
               {tenantSlug && (
-                <p className="mt-3 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-3 text-sm">
                   Your public booking page:{" "}
                   <a
                     href={`/book/${tenantSlug}`}
@@ -325,7 +334,7 @@ export default function OnboardingPage() {
               )}
               <button
                 onClick={() => router.push("/dashboard")}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold"
               >
                 Go to Dashboard <ArrowRight className="h-4 w-4" />
               </button>
@@ -333,7 +342,7 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-4 text-center text-xs">
           Step {["business", "services", "staff", "done"].indexOf(step) + 1} of 4
         </p>
       </div>

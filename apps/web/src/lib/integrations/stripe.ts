@@ -2,7 +2,8 @@ import Stripe from "stripe";
 import { SubscriptionPlan } from "@bookflow/database";
 
 export const stripe = new Stripe(process.env["STRIPE_SECRET_KEY"]!, {
-  apiVersion: "2024-12-18.acacia",
+  // apiVersion omitted on purpose: the SDK pins the version it was typed against,
+  // so it can never drift out of sync with the installed `stripe` package.
   typescript: true,
 });
 
@@ -19,7 +20,13 @@ export const PLAN_LIMITS = {
   [SubscriptionPlan.PRO]: {
     maxStaff: null, // unlimited
     maxBookingsPerMonth: null,
-    features: ["email_reminders", "sms_reminders", "whatsapp_reminders", "advanced_analytics", "custom_branding"],
+    features: [
+      "email_reminders",
+      "sms_reminders",
+      "whatsapp_reminders",
+      "advanced_analytics",
+      "custom_branding",
+    ],
   },
   [SubscriptionPlan.BUSINESS]: {
     maxStaff: null,
@@ -55,7 +62,11 @@ export const STRIPE_PRICE_IDS = {
 // STRIPE HELPERS
 // ============================================================
 
-export async function createStripeCustomer(email: string, name: string, metadata?: Record<string, string>) {
+export async function createStripeCustomer(
+  email: string,
+  name: string,
+  metadata?: Record<string, string>,
+) {
   return stripe.customers.create({ email, name, metadata });
 }
 
@@ -91,10 +102,7 @@ export async function createCheckoutSession({
   });
 }
 
-export async function createBillingPortalSession(
-  customerId: string,
-  returnUrl: string,
-) {
+export async function createBillingPortalSession(customerId: string, returnUrl: string) {
   return stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
@@ -122,11 +130,7 @@ export async function createPaymentIntent({
 }
 
 export function constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event {
-  return stripe.webhooks.constructEvent(
-    payload,
-    signature,
-    process.env["STRIPE_WEBHOOK_SECRET"]!,
-  );
+  return stripe.webhooks.constructEvent(payload, signature, process.env["STRIPE_WEBHOOK_SECRET"]!);
 }
 
 export function getPlanFromPriceId(priceId: string): SubscriptionPlan | null {

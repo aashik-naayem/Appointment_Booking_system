@@ -40,6 +40,15 @@ export function apiValidationError(errors: Record<string, string[]>) {
  * Never exposes internal error details in production.
  */
 export function handleApiError(error: unknown): NextResponse {
+  // requireAuth()/requireTenant() call Next's redirect(), which works by throwing.
+  // In a route handler that must become a proper 401/403 JSON response, not a 500.
+  const digest = (error as { digest?: unknown } | null)?.digest;
+  if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+    return digest.includes("/auth/login")
+      ? apiError("Unauthorized", 401)
+      : apiError("Business setup required", 403);
+  }
+
   console.error("[API Error]:", error);
 
   if (error instanceof ZodError) {
@@ -68,12 +77,16 @@ export function handleApiError(error: unknown): NextResponse {
     // Known business logic errors (safe to expose)
     const safeErrors = [
       "Time slot was just booked",
+      "Selected time slot is no longer available",
       "Selected time slot is not available",
       "Service not found",
       "Booking limit reached",
+      "Booking is not available at this time",
       "Cannot reschedule",
       "Cannot cancel",
       "Staff member not found",
+      "This staff member cannot perform",
+      "Appointment not found",
     ];
 
     const isSafe = safeErrors.some((msg) => error.message.includes(msg));

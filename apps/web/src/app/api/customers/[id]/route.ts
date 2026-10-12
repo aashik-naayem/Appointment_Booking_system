@@ -1,5 +1,11 @@
 import { type NextRequest } from "next/server";
-import { apiSuccess, apiError, handleApiError, parsePaginationParams, getPaginationMeta } from "@/lib/utils/api";
+import {
+  apiSuccess,
+  apiError,
+  handleApiError,
+  parsePaginationParams,
+  getPaginationMeta,
+} from "@/lib/utils/api";
 import { requireTenant, requireRole } from "@/lib/permissions";
 import { prisma, UserRole } from "@bookflow/database";
 import { z } from "zod";
@@ -14,10 +20,7 @@ const updateCustomerSchema = z.object({
   preferredChannel: z.enum(["EMAIL", "SMS", "WHATSAPP", "IN_APP"]).optional(),
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireTenant();
     const { id } = await params;
@@ -58,14 +61,11 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireRole(UserRole.ADMIN);
     const { id } = await params;
-    const body = await req.json() as unknown;
+    const body = (await req.json()) as unknown;
     const input = updateCustomerSchema.parse(body);
 
     const customer = await prisma.customer.update({

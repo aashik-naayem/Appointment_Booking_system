@@ -63,3 +63,11 @@ describe("encrypt / decrypt", () => {
     expect(decrypt(encrypt(special))).toBe(special);
   });
 });
+
+describe("ENCRYPTION_KEY validation", () => {
+  it("rejects keys shorter than 32 bytes", async () => {
+    process.env["ENCRYPTION_KEY"] = "too-short";
+    const { encrypt } = await getCrypto();
+    expect(() => encrypt("x")).toThrow(/at least 32 bytes/);
+  });
+});

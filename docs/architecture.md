@@ -20,6 +20,7 @@ bookflow/ (Turborepo)
 BookFlow uses a **shared database, isolated by tenantId** model (sometimes called "schema-per-tenant lite").
 
 Every tenant-owned entity in the Prisma schema has:
+
 - A required `tenantId` field
 - A foreign key to `Tenant`
 - Database indexes on `tenantId`
@@ -55,6 +56,7 @@ Client → Next.js Middleware (auth guard)
 ## Authentication
 
 Auth.js v5 (next-auth) manages authentication with two strategies:
+
 - **Credentials** (email + password) — bcrypt hashed, brute-force protection
 - **Google OAuth** — account linking supported
 
@@ -81,8 +83,9 @@ The availability engine is the most critical component. It:
 // Simplified inner transaction check
 const conflictCount = await tx.appointment.count({
   where: {
-    tenantId, staffId,
-    startTime: { lt: endTime },  // overlap condition
+    tenantId,
+    staffId,
+    startTime: { lt: endTime }, // overlap condition
     endTime: { gt: startTime },
     status: { notIn: ["CANCELLED"] },
   },
@@ -94,14 +97,14 @@ if (conflictCount >= service.maxConcurrent) throw new Error("Slot taken");
 
 Long-running or deferred work is handled by Inngest:
 
-| Event | Handler | Description |
-|-------|---------|-------------|
-| `booking/created` | `onBookingCreated` | Send confirmations, schedule reminders, sync calendar |
-| `booking/cancelled` | `onBookingCancelled` | Cancel pending notifications, sync calendar |
-| `booking/rescheduled` | `onBookingRescheduled` | Cancel old reminders, create new ones |
-| `stripe/webhook` | `onStripeWebhook` | Sync subscription state (idempotent) |
-| Cron `* * * * *` | `sendPendingReminders` | Process due notification queue |
-| Cron `0 0 * * *` | `generateDailyAnalytics` | Reset monthly counters |
+| Event                 | Handler                  | Description                                           |
+| --------------------- | ------------------------ | ----------------------------------------------------- |
+| `booking/created`     | `onBookingCreated`       | Send confirmations, schedule reminders, sync calendar |
+| `booking/cancelled`   | `onBookingCancelled`     | Cancel pending notifications, sync calendar           |
+| `booking/rescheduled` | `onBookingRescheduled`   | Cancel old reminders, create new ones                 |
+| `stripe/webhook`      | `onStripeWebhook`        | Sync subscription state (idempotent)                  |
+| Cron `* * * * *`      | `sendPendingReminders`   | Process due notification queue                        |
+| Cron `0 0 * * *`      | `generateDailyAnalytics` | Reset monthly counters                                |
 
 All jobs are **idempotent** — running them twice has no unintended effect.
 
@@ -145,6 +148,7 @@ Update Notification.status → SENT / FAILED (with retry count)
 ## API Architecture
 
 Route handlers are thin — they only:
+
 1. Authenticate and authorize
 2. Validate input (Zod)
 3. Call a service function

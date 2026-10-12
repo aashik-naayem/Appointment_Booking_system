@@ -4,10 +4,7 @@ import { requireTenant, requireRole } from "@/lib/permissions";
 import { prisma, UserRole } from "@bookflow/database";
 import { updateServiceSchema } from "@/lib/validations/service";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireTenant();
     const { id } = await params;
@@ -28,14 +25,11 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireRole(UserRole.ADMIN);
     const { id } = await params;
-    const body = await req.json() as unknown;
+    const body = (await req.json()) as unknown;
     const input = updateServiceSchema.parse(body);
 
     const { staffIds, ...serviceData } = input;
@@ -66,10 +60,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireRole(UserRole.ADMIN);
     const { id } = await params;
@@ -85,7 +76,10 @@ export async function DELETE(
     });
 
     if (futureAppointments > 0) {
-      return apiError(`Cannot delete: service has ${futureAppointments} upcoming appointment(s)`, 400);
+      return apiError(
+        `Cannot delete: service has ${futureAppointments} upcoming appointment(s)`,
+        400,
+      );
     }
 
     await prisma.service.update({

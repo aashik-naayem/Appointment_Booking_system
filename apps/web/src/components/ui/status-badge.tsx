@@ -1,10 +1,7 @@
 import { cn } from "@/lib/utils/cn";
 import type { AppointmentStatus } from "@bookflow/database";
 
-const STATUS_CONFIG: Record<
-  AppointmentStatus,
-  { label: string; className: string }
-> = {
+const STATUS_CONFIG: Record<AppointmentStatus, { label: string; className: string }> = {
   PENDING: {
     label: "Pending",
     className: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",

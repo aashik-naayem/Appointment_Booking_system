@@ -200,8 +200,8 @@ export async function GET(request: NextRequest) {
           })),
           topStaff: topStaff.map((s) => ({
             staffId: s.staffId,
-            staffName: s.staffId ? staffMap[s.staffId]?.name ?? "Unknown" : "Unassigned",
-            avatarUrl: s.staffId ? staffMap[s.staffId]?.avatarUrl ?? null : null,
+            staffName: s.staffId ? (staffMap[s.staffId]?.name ?? "Unknown") : "Unassigned",
+            avatarUrl: s.staffId ? (staffMap[s.staffId]?.avatarUrl ?? null) : null,
             completedBookings: s._count.staffId,
             revenue: Number(s._sum.totalAmount) ?? 0,
           })),

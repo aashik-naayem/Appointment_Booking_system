@@ -1,6 +1,6 @@
 /**
  * BookFlow Availability Engine
- * 
+ *
  * This is the core scheduling logic. It handles:
  * - Business hours
  * - Staff working hours
@@ -42,7 +42,7 @@ import { redis } from "@/lib/db/redis";
 
 export type TimeSlot = {
   startTime: string; // ISO string (UTC)
-  endTime: string;   // ISO string (UTC)
+  endTime: string; // ISO string (UTC)
   displayStart: string; // Formatted in tenant timezone
   displayEnd: string;
   available: boolean;
@@ -137,10 +137,7 @@ export function calculateAppointmentEndTime(
 /**
  * Calculate the actual end time shown to customer (no buffer included).
  */
-export function calculateAppointmentDisplayEndTime(
-  startTime: Date,
-  durationMinutes: number,
-): Date {
+export function calculateAppointmentDisplayEndTime(startTime: Date, durationMinutes: number): Date {
   return addMinutes(startTime, durationMinutes);
 }
 
@@ -246,8 +243,10 @@ async function computeAvailableSlots({
     // Generate slots at interval matching service duration
     let slotStart = workStartUTC;
 
-    while (isBefore(addMinutes(slotStart, totalDuration), workEndUTC) ||
-           isEqual(addMinutes(slotStart, totalDuration), workEndUTC)) {
+    while (
+      isBefore(addMinutes(slotStart, totalDuration), workEndUTC) ||
+      isEqual(addMinutes(slotStart, totalDuration), workEndUTC)
+    ) {
       const slotEnd = addMinutes(slotStart, totalDuration);
       const displayEnd = addMinutes(slotStart, slotDuration);
 
@@ -260,22 +259,14 @@ async function computeAvailableSlots({
 
       // Check for conflicts with existing appointments
       const hasConflict = existingAppointments.some((apt) =>
-        slotsOverlap(
-          slotStart,
-          slotEnd,
-          apt.startTime,
-          apt.endTime,
-        ),
+        slotsOverlap(slotStart, slotEnd, apt.startTime, apt.endTime),
       );
 
       const displayStartLocal = format(
         toZonedTime(slotStart, timezone),
         "yyyy-MM-dd'T'HH:mm:ssxxx",
       );
-      const displayEndLocal = format(
-        toZonedTime(displayEnd, timezone),
-        "HH:mm",
-      );
+      const displayEndLocal = format(toZonedTime(displayEnd, timezone), "HH:mm");
 
       // Avoid duplicate slots (same time, different staff — for "any staff" queries)
       const existingSlot = slots.find((s) => s.startTime === slotStart.toISOString());
@@ -300,9 +291,7 @@ async function computeAvailableSlots({
     }
   }
 
-  return slots.filter((s) => s.available).sort((a, b) =>
-    a.startTime.localeCompare(b.startTime),
-  );
+  return slots.filter((s) => s.available).sort((a, b) => a.startTime.localeCompare(b.startTime));
 }
 
 async function checkSlotAvailability({
@@ -389,15 +378,14 @@ async function checkHoliday(tenantId: string, date: Date): Promise<boolean> {
 
 async function getStaffForService(tenantId: string, serviceId: string) {
   const staffServices = await prisma.staffService.findMany({
-    where: { serviceId },
-    include: {
-      staff: {
-        where: { tenantId, status: "ACTIVE", deletedAt: null },
-      },
+    where: {
+      serviceId,
+      staff: { tenantId, status: "ACTIVE", deletedAt: null },
     },
+    include: { staff: true },
   });
 
-  return staffServices.map((ss) => ss.staff).filter(Boolean) as Staff[];
+  return staffServices.map((ss) => ss.staff);
 }
 
 function getDayOfWeek(dayIndex: number): DayOfWeek {

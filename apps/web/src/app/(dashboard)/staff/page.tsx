@@ -1,6 +1,7 @@
 import { requireTenant } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
 import { StaffClient } from "@/components/dashboard/staff/staff-client";
+import { serialize } from "@/lib/utils/serialize";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Staff" };
@@ -31,5 +32,7 @@ export default async function StaffPage() {
     }),
   ]);
 
-  return <StaffClient initialStaff={staff} services={services} tenantId={ctx.tenant.id} />;
+  return (
+    <StaffClient initialStaff={serialize(staff)} services={services} tenantId={ctx.tenant.id} />
+  );
 }

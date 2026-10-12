@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ============================================================
 # BookFlow — Development database only
 # Run: docker compose -f docker-compose.dev.yml up -d

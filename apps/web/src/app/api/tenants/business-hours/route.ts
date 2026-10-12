@@ -7,7 +7,15 @@ import { z } from "zod";
 const businessHoursSchema = z.object({
   businessHours: z.array(
     z.object({
-      dayOfWeek: z.enum(["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"]),
+      dayOfWeek: z.enum([
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ]),
       startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       isOpen: z.boolean(),
@@ -31,7 +39,7 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const ctx = await requireRole(UserRole.ADMIN);
-    const body = await req.json() as unknown;
+    const body = (await req.json()) as unknown;
     const { businessHours } = businessHoursSchema.parse(body);
 
     await prisma.$transaction(

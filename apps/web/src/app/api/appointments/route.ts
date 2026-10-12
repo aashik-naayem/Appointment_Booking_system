@@ -1,5 +1,11 @@
 import { type NextRequest } from "next/server";
-import { apiSuccess, apiCreated, handleApiError, parsePaginationParams, getPaginationMeta } from "@/lib/utils/api";
+import {
+  apiSuccess,
+  apiCreated,
+  handleApiError,
+  parsePaginationParams,
+  getPaginationMeta,
+} from "@/lib/utils/api";
 import { requireTenant, requireRole } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
 import { UserRole } from "@bookflow/database";
@@ -92,7 +98,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
     const input = createBookingSchema.parse(body);
 
     // tenantId must come from a verified source (URL param or request body tied to public slug)

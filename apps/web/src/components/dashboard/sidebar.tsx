@@ -54,12 +54,12 @@ export function DashboardSidebar({ tenant, user }: Props) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-border bg-sidebar transition-all duration-300",
+        "border-border bg-sidebar flex flex-col border-r transition-all duration-300",
         collapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center border-b border-sidebar-border px-4">
+      <div className="border-sidebar-border flex h-16 items-center border-b px-4">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
             {tenant.logoUrl ? (
@@ -72,13 +72,13 @@ export function DashboardSidebar({ tenant, user }: Props) {
               />
             ) : (
               <div
-                className="flex h-7 w-7 items-center justify-center rounded-md text-white text-xs font-bold"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white"
                 style={{ backgroundColor: tenant.primaryColor }}
               >
                 {tenant.name[0]?.toUpperCase()}
               </div>
             )}
-            <span className="truncate font-semibold text-sidebar-foreground text-sm">
+            <span className="text-sidebar-foreground truncate text-sm font-semibold">
               {tenant.name}
             </span>
           </Link>
@@ -86,7 +86,7 @@ export function DashboardSidebar({ tenant, user }: Props) {
         {collapsed && (
           <Link href="/dashboard" className="mx-auto">
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-md text-white text-xs font-bold"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white"
               style={{ backgroundColor: tenant.primaryColor }}
             >
               {tenant.name[0]?.toUpperCase()}
@@ -130,11 +130,11 @@ export function DashboardSidebar({ tenant, user }: Props) {
 
       {/* Public booking link */}
       {!collapsed && (
-        <div className="border-t border-sidebar-border p-4">
+        <div className="border-sidebar-border border-t p-4">
           <Link
             href={`/book/${tenant.slug}`}
             target="_blank"
-            className="flex items-center gap-2 text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+            className="text-sidebar-foreground/60 hover:text-sidebar-foreground flex items-center gap-2 text-xs transition-colors"
           >
             <Globe className="h-3.5 w-3.5" />
             <span>Public booking page</span>
@@ -143,17 +143,13 @@ export function DashboardSidebar({ tenant, user }: Props) {
       )}
 
       {/* Collapse toggle */}
-      <div className="border-t border-sidebar-border p-2">
+      <div className="border-sidebar-border border-t p-2">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground flex w-full items-center justify-center rounded-md p-2 transition-colors"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
     </aside>

@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { cn } from "@/lib/utils/cn";
 import type { Tenant, AppointmentStatus } from "@bookflow/database";
+import type { Serialized } from "@/lib/utils/serialize";
 import {
   CalendarCheck2,
   DollarSign,
@@ -20,7 +21,7 @@ type Appointment = {
   startTime: Date;
   endTime: Date;
   status: AppointmentStatus;
-  service: { name: string; duration: number; price: { toNumber: () => number } };
+  service: { name: string; duration: number; price: number };
   staff: { name: string; avatarUrl: string | null } | null;
   customer: { name: string; email: string };
 };
@@ -37,7 +38,7 @@ type Props = {
       pendingAppointments: number;
     };
   };
-  tenant: Tenant;
+  tenant: Serialized<Tenant>;
 };
 
 export function DashboardOverview({ data, tenant }: Props) {
@@ -90,13 +91,10 @@ export function DashboardOverview({ data, tenant }: Props) {
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div
-              key={card.label}
-              className="rounded-lg border border-border bg-card p-5 shadow-sm"
-            >
+            <div key={card.label} className="border-border bg-card rounded-lg border p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
+                  <p className="text-muted-foreground text-sm font-medium">{card.label}</p>
                   <p className="mt-2 text-3xl font-bold">{card.value}</p>
                   {card.change !== undefined && (
                     <p
@@ -125,24 +123,22 @@ export function DashboardOverview({ data, tenant }: Props) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Today's appointments */}
-        <div className="rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="border-border bg-card rounded-lg border shadow-sm">
+          <div className="border-border flex items-center justify-between border-b px-5 py-4">
             <h2 className="font-semibold">Today&apos;s Appointments</h2>
             <Link
               href="/appointments"
-              className="flex items-center gap-1 text-xs text-primary hover:underline"
+              className="text-primary flex items-center gap-1 text-xs hover:underline"
             >
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="divide-border divide-y">
             {todayAppointments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <CalendarCheck2 className="h-10 w-10 text-muted-foreground/40" />
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No appointments today
-                </p>
+                <CalendarCheck2 className="text-muted-foreground/40 h-10 w-10" />
+                <p className="text-muted-foreground mt-3 text-sm">No appointments today</p>
               </div>
             ) : (
               todayAppointments.map((apt) => (
@@ -153,24 +149,22 @@ export function DashboardOverview({ data, tenant }: Props) {
         </div>
 
         {/* Upcoming appointments */}
-        <div className="rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="border-border bg-card rounded-lg border shadow-sm">
+          <div className="border-border flex items-center justify-between border-b px-5 py-4">
             <h2 className="font-semibold">Upcoming (Next 7 Days)</h2>
             <Link
               href="/calendar"
-              className="flex items-center gap-1 text-xs text-primary hover:underline"
+              className="text-primary flex items-center gap-1 text-xs hover:underline"
             >
               Calendar <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="divide-border divide-y">
             {upcomingAppointments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Clock className="h-10 w-10 text-muted-foreground/40" />
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No upcoming appointments
-                </p>
+                <Clock className="text-muted-foreground/40 h-10 w-10" />
+                <p className="text-muted-foreground mt-3 text-sm">No upcoming appointments</p>
               </div>
             ) : (
               upcomingAppointments.map((apt) => (
@@ -201,23 +195,23 @@ function AppointmentRow({
   return (
     <Link
       href={`/appointments/${appointment.id}`}
-      className="flex items-center gap-3 px-5 py-3 hover:bg-accent/50 transition-colors"
+      className="hover:bg-accent/50 flex items-center gap-3 px-5 py-3 transition-colors"
     >
       <div className="flex-shrink-0 text-center">
-        <p className="text-xs font-medium text-muted-foreground uppercase">
+        <p className="text-muted-foreground text-xs font-medium uppercase">
           {format(new Date(appointment.startTime), "MMM")}
         </p>
         <p className="text-xl font-bold leading-tight">
           {format(new Date(appointment.startTime), "d")}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {format(new Date(appointment.startTime), "HH:mm")}
         </p>
       </div>
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{appointment.customer.name}</p>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="text-muted-foreground truncate text-xs">
           {appointment.service.name}
           {appointment.staff && ` • ${appointment.staff.name}`}
         </p>

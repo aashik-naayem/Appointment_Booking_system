@@ -1,8 +1,9 @@
 import { type NextRequest } from "next/server";
 import { apiCreated, apiError, handleApiError } from "@/lib/utils/api";
 import { prisma } from "@bookflow/database";
-import { registerSchema } from "@/lib/validations/auth";
+import { registerBaseSchema } from "@/lib/validations/auth";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@bookflow/database";
 import { checkAuthRateLimit } from "@/lib/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -16,8 +17,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const body = await request.json() as unknown;
-    const { name, email, password } = registerSchema
+    const body = (await request.json()) as unknown;
+    const { name, email, password } = registerBaseSchema
       .omit({ confirmPassword: true })
       .parse(body);
 
@@ -51,6 +52,10 @@ export async function POST(request: NextRequest) {
 
     return apiCreated({ user });
   } catch (error) {
+    // Two simultaneous sign-ups with the same email: the unique index wins.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return apiError("An account with this email already exists", 409);
+    }
     return handleApiError(error);
   }
 }

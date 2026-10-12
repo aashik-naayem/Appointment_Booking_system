@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const ctx = await requireRole(UserRole.ADMIN);
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
     const input = createServiceSchema.parse(body);
 
     const { staffIds, ...serviceData } = input;

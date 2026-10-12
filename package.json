@@ -20,7 +20,8 @@
     "db:seed": "turbo run db:seed",
     "db:studio": "turbo run db:studio",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "auth:doctor": "npm run auth:doctor -w @bookflow/database --"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
@@ -32,5 +33,19 @@
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "overrides": {
+    "@prisma/client": "5.22.0",
+    "prisma": "5.22.0"
+  },
+  "allowScripts": {
+    "prisma@5.22.0": true,
+    "@prisma/client@5.22.0": true,
+    "@prisma/engines@5.22.0": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true,
+    "sharp@0.35.5": true,
+    "sharp@0.33.5": true
   }
 }

@@ -5,10 +5,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SubscriptionPlan, SubscriptionStatus } from "@bookflow/database";
 
-// Mock prisma
-const mockPrismaSubscription = {
+// Mock prisma (vi.hoisted: vi.mock factories are hoisted above normal top-level consts)
+const mockPrismaSubscription = vi.hoisted(() => ({
   findUnique: vi.fn(),
-};
+}));
 
 vi.mock("@bookflow/database", async () => {
   const actual = await vi.importActual<typeof import("@bookflow/database")>("@bookflow/database");

@@ -1,6 +1,7 @@
 import { requireTenant } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
 import { ServicesClient } from "@/components/dashboard/services/services-client";
+import { serialize } from "@/lib/utils/serialize";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Services" };
@@ -33,8 +34,8 @@ export default async function ServicesPage() {
 
   return (
     <ServicesClient
-      initialServices={services}
-      categories={categories}
+      initialServices={serialize(services)}
+      categories={serialize(categories)}
       tenantId={ctx.tenant.id}
     />
   );

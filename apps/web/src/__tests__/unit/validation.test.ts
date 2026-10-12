@@ -48,12 +48,20 @@ describe("registerSchema", () => {
   });
 
   it("rejects password without uppercase", () => {
-    const result = registerSchema.safeParse({ ...valid, password: "securepass1", confirmPassword: "securepass1" });
+    const result = registerSchema.safeParse({
+      ...valid,
+      password: "securepass1",
+      confirmPassword: "securepass1",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects password without number", () => {
-    const result = registerSchema.safeParse({ ...valid, password: "SecurePass!", confirmPassword: "SecurePass!" });
+    const result = registerSchema.safeParse({
+      ...valid,
+      password: "SecurePass!",
+      confirmPassword: "SecurePass!",
+    });
     expect(result.success).toBe(false);
   });
 
@@ -86,15 +94,21 @@ describe("createBookingSchema", () => {
   });
 
   it("rejects invalid service ID", () => {
-    expect(createBookingSchema.safeParse({ ...valid, serviceId: "not-a-cuid" }).success).toBe(false);
+    expect(createBookingSchema.safeParse({ ...valid, serviceId: "not-a-cuid" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects invalid email", () => {
-    expect(createBookingSchema.safeParse({ ...valid, customerEmail: "not-email" }).success).toBe(false);
+    expect(createBookingSchema.safeParse({ ...valid, customerEmail: "not-email" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects invalid ISO datetime", () => {
-    expect(createBookingSchema.safeParse({ ...valid, startTime: "not-a-date" }).success).toBe(false);
+    expect(createBookingSchema.safeParse({ ...valid, startTime: "not-a-date" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects notes over 500 chars", () => {

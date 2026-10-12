@@ -6,7 +6,8 @@ import Image from "next/image";
 import { format } from "date-fns";
 import axios from "axios";
 import { cn } from "@/lib/utils/cn";
-import type { Service, Staff } from "@bookflow/database";
+import type { Service } from "@bookflow/database";
+import type { Serialized } from "@/lib/utils/serialize";
 import { Clock, DollarSign, User, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,11 +25,25 @@ type BookingTenant = {
   timezone: string;
   currency: string;
   requireDeposit: boolean;
-  services: (Service & {
+  services: (Serialized<Service> & {
     category: { id: string; name: string; color: string | null } | null;
-    staff: { staff: { id: string; name: string; avatarUrl: string | null; title: string | null } }[];
+    staff: {
+      staff: {
+        id: string;
+        name: string;
+        avatarUrl: string | null;
+        title: string | null;
+        bio: string | null;
+      };
+    }[];
   })[];
-  staff: { id: string; name: string; avatarUrl: string | null; title: string | null; bio: string | null }[];
+  staff: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    title: string | null;
+    bio: string | null;
+  }[];
 };
 
 type BookingStep = "service" | "staff" | "datetime" | "details" | "confirm" | "success";
@@ -100,7 +115,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
       setStep("success");
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
-        ? (err.response?.data as { error?: string })?.error ?? "Booking failed"
+        ? ((err.response?.data as { error?: string })?.error ?? "Booking failed")
         : "Something went wrong";
       toast.error(message);
     } finally {
@@ -118,7 +133,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Business header */}
       <header
-        className="py-10 text-white text-center"
+        className="py-10 text-center text-white"
         style={{ backgroundColor: tenant.primaryColor }}
       >
         {tenant.logoUrl && (
@@ -132,7 +147,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
         )}
         <h1 className="text-2xl font-bold">{tenant.name}</h1>
         {tenant.description && (
-          <p className="mt-1 text-sm opacity-90 max-w-sm mx-auto px-4">{tenant.description}</p>
+          <p className="mx-auto mt-1 max-w-sm px-4 text-sm opacity-90">{tenant.description}</p>
         )}
       </header>
 
@@ -151,7 +166,11 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   <div
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors",
-                      isDone ? "bg-green-500 text-white" : isCurrent ? "text-white" : "bg-muted text-muted-foreground",
+                      isDone
+                        ? "bg-green-500 text-white"
+                        : isCurrent
+                          ? "text-white"
+                          : "bg-muted text-muted-foreground",
                     )}
                     style={isCurrent ? { backgroundColor: tenant.primaryColor } : undefined}
                   >
@@ -172,7 +191,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
         )}
 
         {/* Steps */}
-        <div className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="border-border bg-card rounded-xl border shadow-sm">
           {/* Service selection */}
           {step === "service" && (
             <div className="p-6">
@@ -183,9 +202,11 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                     key={service.id}
                     onClick={() => {
                       setSelectedService(service);
-                      setStep(service.requiresStaff && service.staff.length > 0 ? "staff" : "datetime");
+                      setStep(
+                        service.requiresStaff && service.staff.length > 0 ? "staff" : "datetime",
+                      );
                     }}
-                    className="flex w-full items-start gap-4 rounded-lg border border-border p-4 text-left transition-colors hover:border-primary hover:bg-accent/50"
+                    className="border-border hover:border-primary hover:bg-accent/50 flex w-full items-start gap-4 rounded-lg border p-4 text-left transition-colors"
                   >
                     <div className="flex-1">
                       {service.category && (
@@ -198,11 +219,11 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                       )}
                       <p className="font-medium">{service.name}</p>
                       {service.description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-muted-foreground mt-0.5 line-clamp-2 text-sm">
                           {service.description}
                         </p>
                       )}
-                      <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="text-muted-foreground mt-2 flex items-center gap-4 text-sm">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
                           {service.duration} min
@@ -213,7 +234,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                         </span>
                       </div>
                     </div>
-                    <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="text-muted-foreground mt-1 h-5 w-5 shrink-0" />
                   </button>
                 ))}
               </div>
@@ -225,34 +246,48 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
             <div className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Select Staff</h2>
-                <button onClick={goBack} className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button
+                  onClick={goBack}
+                  className="text-primary flex items-center gap-1 text-sm hover:underline"
+                >
                   <ChevronLeft className="h-4 w-4" /> Back
                 </button>
               </div>
 
               <div className="space-y-3">
                 <button
-                  onClick={() => { setSelectedStaff(null); setStep("datetime"); }}
-                  className="flex w-full items-center gap-3 rounded-lg border border-border p-4 text-left hover:border-primary hover:bg-accent/50 transition-colors"
+                  onClick={() => {
+                    setSelectedStaff(null);
+                    setStep("datetime");
+                  }}
+                  className="border-border hover:border-primary hover:bg-accent/50 flex w-full items-center gap-3 rounded-lg border p-4 text-left transition-colors"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                    <User className="h-5 w-5 text-muted-foreground" />
+                  <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full">
+                    <User className="text-muted-foreground h-5 w-5" />
                   </div>
                   <div>
                     <p className="font-medium">Any available staff</p>
-                    <p className="text-sm text-muted-foreground">First available</p>
+                    <p className="text-muted-foreground text-sm">First available</p>
                   </div>
                 </button>
 
                 {selectedService.staff.map(({ staff }) => (
                   <button
                     key={staff.id}
-                    onClick={() => { setSelectedStaff(staff); setStep("datetime"); }}
-                    className="flex w-full items-center gap-3 rounded-lg border border-border p-4 text-left hover:border-primary hover:bg-accent/50 transition-colors"
+                    onClick={() => {
+                      setSelectedStaff(staff);
+                      setStep("datetime");
+                    }}
+                    className="border-border hover:border-primary hover:bg-accent/50 flex w-full items-center gap-3 rounded-lg border p-4 text-left transition-colors"
                   >
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted">
+                    <div className="bg-muted relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
                       {staff.avatarUrl ? (
-                        <Image src={staff.avatarUrl} alt={staff.name} fill className="object-cover" />
+                        <Image
+                          src={staff.avatarUrl}
+                          alt={staff.name}
+                          fill
+                          className="object-cover"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-sm font-medium">
                           {staff.name[0]?.toUpperCase()}
@@ -261,7 +296,9 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                     </div>
                     <div>
                       <p className="font-medium">{staff.name}</p>
-                      {staff.title && <p className="text-sm text-muted-foreground">{staff.title}</p>}
+                      {staff.title && (
+                        <p className="text-muted-foreground text-sm">{staff.title}</p>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -274,7 +311,10 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
             <div className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Choose Date & Time</h2>
-                <button onClick={goBack} className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button
+                  onClick={goBack}
+                  className="text-primary flex items-center gap-1 text-sm hover:underline"
+                >
                   <ChevronLeft className="h-4 w-4" /> Back
                 </button>
               </div>
@@ -282,7 +322,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
               {/* Date picker */}
               <div className="mb-4">
                 <label className="mb-2 block text-sm font-medium">Select Date</label>
-                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto sm:grid-cols-7">
+                <div className="grid max-h-48 grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-7">
                   {dateOptions.slice(0, 28).map((d) => {
                     const dateObj = new Date(d + "T00:00:00");
                     return (
@@ -295,10 +335,19 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                             ? "border-primary text-white"
                             : "border-border hover:border-primary hover:bg-accent/50",
                         )}
-                        style={selectedDate === d ? { backgroundColor: tenant.primaryColor, borderColor: tenant.primaryColor } : undefined}
+                        style={
+                          selectedDate === d
+                            ? {
+                                backgroundColor: tenant.primaryColor,
+                                borderColor: tenant.primaryColor,
+                              }
+                            : undefined
+                        }
                       >
                         <span className="font-medium">{format(dateObj, "EEE")}</span>
-                        <span className="text-base font-bold leading-tight">{format(dateObj, "d")}</span>
+                        <span className="text-base font-bold leading-tight">
+                          {format(dateObj, "d")}
+                        </span>
                         <span>{format(dateObj, "MMM")}</span>
                       </button>
                     );
@@ -313,15 +362,15 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   {slotsLoading ? (
                     <div className="grid grid-cols-3 gap-2">
                       {Array.from({ length: 9 }).map((_, i) => (
-                        <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
+                        <div key={i} className="bg-muted h-10 animate-pulse rounded-lg" />
                       ))}
                     </div>
                   ) : !slots || slots.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
+                    <p className="text-muted-foreground py-8 text-center text-sm">
                       No available times on this date. Please select another date.
                     </p>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                    <div className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto">
                       {slots.map((slot) => (
                         <button
                           key={slot.startTime}
@@ -335,7 +384,14 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                               ? "text-white"
                               : "border-border hover:border-primary hover:bg-accent/50",
                           )}
-                          style={selectedSlot?.startTime === slot.startTime ? { backgroundColor: tenant.primaryColor, borderColor: tenant.primaryColor } : undefined}
+                          style={
+                            selectedSlot?.startTime === slot.startTime
+                              ? {
+                                  backgroundColor: tenant.primaryColor,
+                                  borderColor: tenant.primaryColor,
+                                }
+                              : undefined
+                          }
                         >
                           {format(new Date(slot.startTime), "HH:mm")}
                         </button>
@@ -352,7 +408,11 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
             <form onSubmit={form.handleSubmit(() => setStep("confirm"))} className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Your Details</h2>
-                <button type="button" onClick={goBack} className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className="text-primary flex items-center gap-1 text-sm hover:underline"
+                >
                   <ChevronLeft className="h-4 w-4" /> Back
                 </button>
               </div>
@@ -364,11 +424,13 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   </label>
                   <input
                     {...form.register("name")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Your full name"
                   />
                   {form.formState.errors.name && (
-                    <p className="mt-1 text-xs text-destructive">{form.formState.errors.name.message}</p>
+                    <p className="text-destructive mt-1 text-xs">
+                      {form.formState.errors.name.message}
+                    </p>
                   )}
                 </div>
 
@@ -379,11 +441,13 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   <input
                     {...form.register("email")}
                     type="email"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="your@email.com"
                   />
                   {form.formState.errors.email && (
-                    <p className="mt-1 text-xs text-destructive">{form.formState.errors.email.message}</p>
+                    <p className="text-destructive mt-1 text-xs">
+                      {form.formState.errors.email.message}
+                    </p>
                   )}
                 </div>
 
@@ -392,7 +456,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   <input
                     {...form.register("phone")}
                     type="tel"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
@@ -402,7 +466,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   <textarea
                     {...form.register("notes")}
                     rows={3}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Any special requests or information..."
                   />
                 </div>
@@ -423,22 +487,22 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
             <div className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Review & Confirm</h2>
-                <button onClick={goBack} className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button
+                  onClick={goBack}
+                  className="text-primary flex items-center gap-1 text-sm hover:underline"
+                >
                   <ChevronLeft className="h-4 w-4" /> Back
                 </button>
               </div>
 
-              <div className="space-y-3 rounded-lg border border-border p-4 bg-muted/30">
+              <div className="border-border bg-muted/30 space-y-3 rounded-lg border p-4">
                 <Row label="Service" value={selectedService.name} />
                 {selectedStaff && <Row label="Staff" value={selectedStaff.name} />}
                 <Row
                   label="Date"
                   value={format(new Date(selectedSlot.startTime), "EEEE, MMMM d, yyyy")}
                 />
-                <Row
-                  label="Time"
-                  value={format(new Date(selectedSlot.startTime), "HH:mm")}
-                />
+                <Row label="Time" value={format(new Date(selectedSlot.startTime), "HH:mm")} />
                 <Row label="Duration" value={`${selectedService.duration} min`} />
                 <Row label="Price" value={`$${Number(selectedService.price).toFixed(2)}`} />
                 <Row label="Name" value={form.getValues("name")} />
@@ -454,7 +518,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                 {isSubmitting ? "Confirming..." : "Confirm Booking"}
               </button>
 
-              <p className="mt-3 text-center text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-3 text-center text-xs">
                 You&apos;ll receive a confirmation email shortly after booking.
               </p>
             </div>
@@ -470,13 +534,13 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                 <CheckCircle2 className="h-8 w-8" />
               </div>
               <h2 className="text-xl font-bold">Booking Confirmed!</h2>
-              <p className="mt-2 text-muted-foreground">
+              <p className="text-muted-foreground mt-2">
                 Your appointment has been successfully booked. A confirmation email is on its way.
               </p>
               {bookingRef && (
-                <div className="mt-4 rounded-lg border border-border bg-muted/30 p-4">
-                  <p className="text-sm text-muted-foreground">Booking Reference</p>
-                  <p className="font-mono font-bold text-lg tracking-widest">
+                <div className="border-border bg-muted/30 mt-4 rounded-lg border p-4">
+                  <p className="text-muted-foreground text-sm">Booking Reference</p>
+                  <p className="font-mono text-lg font-bold tracking-widest">
                     #{bookingRef.slice(-8).toUpperCase()}
                   </p>
                 </div>
@@ -490,7 +554,7 @@ export function BookingPage({ tenant }: { tenant: BookingTenant }) {
                   setSelectedSlot(null);
                   form.reset();
                 }}
-                className="mt-6 rounded-lg border border-border px-6 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                className="border-border hover:bg-accent mt-6 rounded-lg border px-6 py-2 text-sm font-medium transition-colors"
               >
                 Book Another Appointment
               </button>

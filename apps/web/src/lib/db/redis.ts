@@ -1,13 +1,15 @@
 import { Redis } from "@upstash/redis";
+import { isRedisConfigured } from "@/lib/utils/env";
 
-// Only initialize if env vars are present
-export const redis =
-  process.env["UPSTASH_REDIS_REST_URL"] && process.env["UPSTASH_REDIS_REST_TOKEN"]
-    ? new Redis({
-        url: process.env["UPSTASH_REDIS_REST_URL"],
-        token: process.env["UPSTASH_REDIS_REST_TOKEN"],
-      })
-    : null;
+// Only initialize when real credentials exist. The placeholder values from .env.example
+// (`https://...upstash.io` / `...`) are non-empty, so a plain truthiness check created a client
+// that failed on every call - which made sign-up return HTTP 500.
+export const redis = isRedisConfigured()
+  ? new Redis({
+      url: process.env["UPSTASH_REDIS_REST_URL"]!,
+      token: process.env["UPSTASH_REDIS_REST_TOKEN"]!,
+    })
+  : null;
 
 export async function getCached<T>(
   key: string,

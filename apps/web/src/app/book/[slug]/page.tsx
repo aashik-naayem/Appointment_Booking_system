@@ -1,6 +1,7 @@
 import { prisma } from "@bookflow/database";
 import { notFound } from "next/navigation";
 import { BookingPage } from "@/components/booking/booking-page";
+import { serialize } from "@/lib/utils/serialize";
 import type { Metadata } from "next";
 
 type Props = {
@@ -31,10 +32,11 @@ async function getTenant(slug: string) {
         include: {
           category: { select: { id: true, name: true, color: true } },
           staff: {
+            // to-one relations cannot be filtered inside `include`; filter via the join row
+            where: { staff: { status: "ACTIVE", deletedAt: null } },
             include: {
               staff: {
-                where: { status: "ACTIVE", deletedAt: null },
-                select: { id: true, name: true, avatarUrl: true, title: true },
+                select: { id: true, name: true, avatarUrl: true, title: true, bio: true },
               },
             },
           },
@@ -59,5 +61,6 @@ export default async function PublicBookingPage({ params }: Props) {
 
   if (!tenant) notFound();
 
-  return <BookingPage tenant={tenant} />;
+  // Decimal prices cannot cross the Server → Client boundary, convert to numbers first
+  return <BookingPage tenant={serialize(tenant)} />;
 }

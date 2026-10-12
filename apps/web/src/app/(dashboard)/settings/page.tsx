@@ -1,6 +1,7 @@
 import { requireTenant } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
 import { SettingsClient } from "@/components/dashboard/settings/settings-client";
+import { serialize } from "@/lib/utils/serialize";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -21,9 +22,9 @@ export default async function SettingsPage() {
 
   return (
     <SettingsClient
-      tenant={ctx.tenant}
-      businessHours={businessHours}
-      holidays={holidays}
+      tenant={serialize(ctx.tenant)}
+      businessHours={serialize(businessHours)}
+      holidays={serialize(holidays)}
     />
   );
 }

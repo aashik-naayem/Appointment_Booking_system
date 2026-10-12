@@ -10,19 +10,28 @@
   },
   "scripts": {
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:prod": "prisma migrate deploy",
-    "db:seed": "ts-node --esm prisma/seed.ts",
-    "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset --force"
+    "db:migrate": "dotenv -e ../../.env.local -e ../../.env -- prisma migrate dev",
+    "db:migrate:prod": "dotenv -e ../../.env.local -e ../../.env -- prisma migrate deploy",
+    "db:seed": "dotenv -e ../../.env.local -e ../../.env -- tsx prisma/seed.ts",
+    "db:studio": "dotenv -e ../../.env.local -e ../../.env -- prisma studio",
+    "db:reset": "dotenv -e ../../.env.local -e ../../.env -- prisma migrate reset --force",
+    "auth:doctor": "dotenv -e ../../.env.local -e ../../.env -- tsx scripts/auth-doctor.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "date-fns": "^4.1.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.7",
+    "dotenv-cli": "^7.4.4",
     "prisma": "^5.22.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3",
-    "@types/node": "^22.10.7"
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts",
+    "schema": "prisma/schema.prisma"
   }
 }

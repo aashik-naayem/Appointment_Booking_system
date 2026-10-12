@@ -8,20 +8,36 @@ import axios from "axios";
 import { toast } from "sonner";
 import { updateTenantSchema, type UpdateTenantInput } from "@/lib/validations/tenant";
 import type { Tenant, BusinessHours, Holiday } from "@bookflow/database";
+import type { Serialized } from "@/lib/utils/serialize";
 import { Save, Trash2, Plus, Globe, Clock, Palette } from "lucide-react";
 import { format } from "date-fns";
 
 const DAY_LABELS: Record<string, string> = {
-  MONDAY: "Monday", TUESDAY: "Tuesday", WEDNESDAY: "Wednesday",
-  THURSDAY: "Thursday", FRIDAY: "Friday", SATURDAY: "Saturday", SUNDAY: "Sunday",
+  MONDAY: "Monday",
+  TUESDAY: "Tuesday",
+  WEDNESDAY: "Wednesday",
+  THURSDAY: "Thursday",
+  FRIDAY: "Friday",
+  SATURDAY: "Saturday",
+  SUNDAY: "Sunday",
 };
 
 const TIMEZONES = Intl.supportedValuesOf("timeZone");
 
-type Props = { tenant: Tenant; businessHours: BusinessHours[]; holidays: Holiday[] };
+type Props = {
+  tenant: Serialized<Tenant>;
+  businessHours: Serialized<BusinessHours>[];
+  holidays: Serialized<Holiday>[];
+};
 
-export function SettingsClient({ tenant, businessHours: initialHours, holidays: initialHolidays }: Props) {
-  const [activeTab, setActiveTab] = useState<"general" | "hours" | "branding" | "notifications">("general");
+export function SettingsClient({
+  tenant,
+  businessHours: initialHours,
+  holidays: initialHolidays,
+}: Props) {
+  const [activeTab, setActiveTab] = useState<"general" | "hours" | "branding" | "notifications">(
+    "general",
+  );
   const [hours, setHours] = useState(initialHours);
   const [holidays, setHolidays] = useState(initialHolidays);
   const [newHolidayName, setNewHolidayName] = useState("");
@@ -99,17 +115,17 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
+      <div className="border-border flex gap-1 border-b">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground border-transparent"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -121,84 +137,148 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
 
       {/* General Settings */}
       {activeTab === "general" && (
-        <form onSubmit={form.handleSubmit((d) => updateMutation.mutate(d))} className="space-y-6 max-w-2xl">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4">
+        <form
+          onSubmit={form.handleSubmit((d) => updateMutation.mutate(d))}
+          className="max-w-2xl space-y-6"
+        >
+          <div className="border-border bg-card space-y-4 rounded-lg border p-6 shadow-sm">
             <h2 className="font-semibold">Business Information</h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <label className="mb-1.5 block text-sm font-medium">Business Name</label>
-                <input {...form.register("name")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("name")}
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div className="col-span-2">
                 <label className="mb-1.5 block text-sm font-medium">Description</label>
-                <textarea {...form.register("description")} rows={2} className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <textarea
+                  {...form.register("description")}
+                  rows={2}
+                  className="border-input bg-background focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Email</label>
-                <input {...form.register("email")} type="email" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("email")}
+                  type="email"
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Phone</label>
-                <input {...form.register("phone")} type="tel" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("phone")}
+                  type="tel"
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div className="col-span-2">
                 <label className="mb-1.5 block text-sm font-medium">Address</label>
-                <input {...form.register("address")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("address")}
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">City</label>
-                <input {...form.register("city")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("city")}
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">State</label>
-                <input {...form.register("state")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("state")}
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4">
+          <div className="border-border bg-card space-y-4 rounded-lg border p-6 shadow-sm">
             <h2 className="font-semibold">Booking Configuration</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Timezone</label>
-                <select {...form.register("timezone")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+                <select
+                  {...form.register("timezone")}
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                >
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Currency</label>
-                <select {...form.register("currency")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  {["USD", "EUR", "GBP", "CAD", "AUD", "JPY"].map((c) => <option key={c} value={c}>{c}</option>)}
+                <select
+                  {...form.register("currency")}
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                >
+                  {["USD", "EUR", "GBP", "CAD", "AUD", "JPY"].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Booking Lead Time (min)</label>
-                <input {...form.register("bookingLeadTime", { valueAsNumber: true })} type="number" min="0" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                <p className="mt-1 text-xs text-muted-foreground">Min time before booking can be made</p>
+                <input
+                  {...form.register("bookingLeadTime", { valueAsNumber: true })}
+                  type="number"
+                  min="0"
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Min time before booking can be made
+                </p>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Booking Window (days)</label>
-                <input {...form.register("bookingWindowDays", { valueAsNumber: true })} type="number" min="1" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input
+                  {...form.register("bookingWindowDays", { valueAsNumber: true })}
+                  type="number"
+                  min="1"
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium">Cancellation Notice (hours)</label>
-                <input {...form.register("cancellationHours", { valueAsNumber: true })} type="number" min="0" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <label className="mb-1.5 block text-sm font-medium">
+                  Cancellation Notice (hours)
+                </label>
+                <input
+                  {...form.register("cancellationHours", { valueAsNumber: true })}
+                  type="number"
+                  min="0"
+                  className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                />
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input type="checkbox" {...form.register("autoConfirm")} className="rounded" />
                 <span className="font-medium">Auto-confirm bookings</span>
                 <span className="text-muted-foreground">(skip manual confirmation)</span>
               </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" {...form.register("allowGuestBooking")} className="rounded" />
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  {...form.register("allowGuestBooking")}
+                  className="rounded"
+                />
                 <span className="font-medium">Allow guest bookings</span>
                 <span className="text-muted-foreground">(no account required)</span>
               </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input type="checkbox" {...form.register("requireDeposit")} className="rounded" />
                 <span className="font-medium">Require deposit</span>
               </label>
@@ -208,7 +288,7 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
             {updateMutation.isPending ? "Saving..." : "Save Changes"}
@@ -218,8 +298,8 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
 
       {/* Business Hours */}
       {activeTab === "hours" && (
-        <div className="space-y-6 max-w-2xl">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <div className="max-w-2xl space-y-6">
+          <div className="border-border bg-card rounded-lg border p-6 shadow-sm">
             <h2 className="mb-4 font-semibold">Business Hours</h2>
             <div className="space-y-3">
               {hours.map((h, idx) => (
@@ -231,7 +311,11 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
                     <input
                       type="checkbox"
                       checked={h.isOpen}
-                      onChange={(e) => setHours(prev => prev.map((p, i) => i === idx ? { ...p, isOpen: e.target.checked } : p))}
+                      onChange={(e) =>
+                        setHours((prev) =>
+                          prev.map((p, i) => (i === idx ? { ...p, isOpen: e.target.checked } : p)),
+                        )
+                      }
                       className="rounded"
                     />
                     Open
@@ -241,26 +325,36 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
                       <input
                         type="time"
                         value={h.startTime}
-                        onChange={(e) => setHours(prev => prev.map((p, i) => i === idx ? { ...p, startTime: e.target.value } : p))}
-                        className="rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onChange={(e) =>
+                          setHours((prev) =>
+                            prev.map((p, i) =>
+                              i === idx ? { ...p, startTime: e.target.value } : p,
+                            ),
+                          )
+                        }
+                        className="border-input bg-background focus-visible:ring-ring rounded-md border px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2"
                       />
                       <span className="text-muted-foreground text-sm">to</span>
                       <input
                         type="time"
                         value={h.endTime}
-                        onChange={(e) => setHours(prev => prev.map((p, i) => i === idx ? { ...p, endTime: e.target.value } : p))}
-                        className="rounded-md border border-input bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onChange={(e) =>
+                          setHours((prev) =>
+                            prev.map((p, i) => (i === idx ? { ...p, endTime: e.target.value } : p)),
+                          )
+                        }
+                        className="border-input bg-background focus-visible:ring-ring rounded-md border px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2"
                       />
                     </>
                   )}
-                  {!h.isOpen && <span className="text-sm text-muted-foreground">Closed</span>}
+                  {!h.isOpen && <span className="text-muted-foreground text-sm">Closed</span>}
                 </div>
               ))}
             </div>
             <button
               onClick={() => hoursMutation.mutate(hours)}
               disabled={hoursMutation.isPending}
-              className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
               {hoursMutation.isPending ? "Saving..." : "Save Hours"}
@@ -268,24 +362,27 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
           </div>
 
           {/* Holidays */}
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+          <div className="border-border bg-card rounded-lg border p-6 shadow-sm">
             <h2 className="mb-4 font-semibold">Holidays & Closures</h2>
-            <div className="space-y-2 mb-4">
+            <div className="mb-4 space-y-2">
               {holidays.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No holidays configured.</p>
+                <p className="text-muted-foreground text-sm">No holidays configured.</p>
               ) : (
                 holidays.map((h) => (
-                  <div key={h.id} className="flex items-center justify-between rounded-md border border-border p-3">
+                  <div
+                    key={h.id}
+                    className="border-border flex items-center justify-between rounded-md border p-3"
+                  >
                     <div>
                       <p className="text-sm font-medium">{h.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {format(new Date(h.date), "MMMM d, yyyy")}
                         {h.recurring && " · Annual"}
                       </p>
                     </div>
                     <button
                       onClick={() => deleteHolidayMutation.mutate(h.id)}
-                      className="rounded-md p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md p-1"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -298,13 +395,13 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
                 value={newHolidayName}
                 onChange={(e) => setNewHolidayName(e.target.value)}
                 placeholder="Holiday name"
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="border-input bg-background focus-visible:ring-ring flex-1 rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
               />
               <input
                 value={newHolidayDate}
                 onChange={(e) => setNewHolidayDate(e.target.value)}
                 type="date"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="border-input bg-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
               />
               <button
                 onClick={() => {
@@ -313,7 +410,7 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
                   }
                 }}
                 disabled={!newHolidayName || !newHolidayDate || addHolidayMutation.isPending}
-                className="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" /> Add
               </button>
@@ -324,30 +421,48 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
 
       {/* Branding */}
       {activeTab === "branding" && (
-        <form onSubmit={form.handleSubmit((d) => updateMutation.mutate(d))} className="space-y-6 max-w-2xl">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4">
+        <form
+          onSubmit={form.handleSubmit((d) => updateMutation.mutate(d))}
+          className="max-w-2xl space-y-6"
+        >
+          <div className="border-border bg-card space-y-4 rounded-lg border p-6 shadow-sm">
             <h2 className="font-semibold">Brand Colors</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Primary Color</label>
                 <div className="flex gap-2">
-                  <input {...form.register("primaryColor")} type="color" className="h-10 w-14 rounded-md border border-input cursor-pointer" />
-                  <input {...form.register("primaryColor")} className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="#6366f1" />
+                  <input
+                    {...form.register("primaryColor")}
+                    type="color"
+                    className="border-input h-10 w-14 cursor-pointer rounded-md border"
+                  />
+                  <input
+                    {...form.register("primaryColor")}
+                    className="border-input bg-background focus-visible:ring-ring flex-1 rounded-md border px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2"
+                    placeholder="#6366f1"
+                  />
                 </div>
               </div>
             </div>
-            <div className="rounded-md border border-border p-4">
-              <p className="text-xs text-muted-foreground mb-2">Preview</p>
+            <div className="border-border rounded-md border p-4">
+              <p className="text-muted-foreground mb-2 text-xs">Preview</p>
               <div className="flex gap-2">
-                <div className="h-8 w-24 rounded-md" style={{ backgroundColor: form.watch("primaryColor") }} />
-                <button type="button" className="h-8 rounded-md px-4 text-sm text-white" style={{ backgroundColor: form.watch("primaryColor") }}>
+                <div
+                  className="h-8 w-24 rounded-md"
+                  style={{ backgroundColor: form.watch("primaryColor") }}
+                />
+                <button
+                  type="button"
+                  className="h-8 rounded-md px-4 text-sm text-white"
+                  style={{ backgroundColor: form.watch("primaryColor") }}
+                >
                   Book Now
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4">
+          <div className="border-border bg-card space-y-4 rounded-lg border p-6 shadow-sm">
             <h2 className="font-semibold">Public Booking Page</h2>
             <div>
               <label className="mb-1.5 block text-sm font-medium">Your Booking URL</label>
@@ -355,7 +470,7 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
                 <input
                   value={`${process.env["NEXT_PUBLIC_APP_URL"] ?? "https://bookflow.app"}/book/${tenant.slug}`}
                   readOnly
-                  className="flex-1 rounded-md border border-input bg-muted px-3 py-2 text-sm font-mono"
+                  className="border-input bg-muted flex-1 rounded-md border px-3 py-2 font-mono text-sm"
                 />
                 <button
                   type="button"
@@ -363,7 +478,7 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
                     navigator.clipboard.writeText(`${window.location.origin}/book/${tenant.slug}`);
                     toast.success("Copied!");
                   }}
-                  className="rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+                  className="border-border hover:bg-accent rounded-md border px-3 py-2 text-sm"
                 >
                   Copy
                 </button>
@@ -374,7 +489,7 @@ export function SettingsClient({ tenant, businessHours: initialHours, holidays: 
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
             {updateMutation.isPending ? "Saving..." : "Save Changes"}

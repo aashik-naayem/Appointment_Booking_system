@@ -17,8 +17,8 @@ BookFlow is a production-quality, multi-tenant SaaS booking platform built with 
 
 > _Add screenshots here — dashboard, booking page, calendar, analytics_
 
-| Dashboard | Booking Page | Analytics |
-|-----------|-------------|-----------|
+| Dashboard                                    | Booking Page                             | Analytics                                    |
+| -------------------------------------------- | ---------------------------------------- | -------------------------------------------- |
 | ![Dashboard](docs/screenshots/dashboard.png) | ![Booking](docs/screenshots/booking.png) | ![Analytics](docs/screenshots/analytics.png) |
 
 ---
@@ -26,6 +26,7 @@ BookFlow is a production-quality, multi-tenant SaaS booking platform built with 
 ## Features
 
 ### For Service Businesses
+
 - **Public booking page** with custom branding and real-time availability
 - **Dashboard** with today's schedule, revenue, and KPIs
 - **Calendar** — day/week/month views with drag-and-drop rescheduling
@@ -38,6 +39,7 @@ BookFlow is a production-quality, multi-tenant SaaS booking platform built with 
 - **Analytics** — revenue, bookings, peak hours, staff performance
 
 ### SaaS Platform
+
 - **Multi-tenant architecture** — complete data isolation between businesses
 - **Three subscription tiers** — Starter, Pro, Business
 - **Stripe billing** — checkout, customer portal, upgrade/downgrade
@@ -48,26 +50,26 @@ BookFlow is a production-quality, multi-tenant SaaS booking platform built with 
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15 (App Router) + TypeScript |
-| Styling | Tailwind CSS + shadcn/ui |
-| Data Fetching | TanStack Query v5 |
-| Database | PostgreSQL + Prisma ORM |
-| Authentication | Auth.js v5 (Credentials + Google OAuth) |
-| Validation | Zod |
-| Payments | Stripe |
-| Email | Resend |
-| SMS/WhatsApp | Twilio |
-| Calendar | Google Calendar API |
-| Caching | Upstash Redis |
-| Rate Limiting | Upstash Ratelimit |
-| Background Jobs | Inngest |
-| Error Monitoring | Sentry |
-| Unit Tests | Vitest + Testing Library |
-| E2E Tests | Playwright |
-| Containerization | Docker + Docker Compose |
-| CI/CD | GitHub Actions |
+| Layer            | Technology                              |
+| ---------------- | --------------------------------------- |
+| Framework        | Next.js 15 (App Router) + TypeScript    |
+| Styling          | Tailwind CSS + shadcn/ui                |
+| Data Fetching    | TanStack Query v5                       |
+| Database         | PostgreSQL + Prisma ORM                 |
+| Authentication   | Auth.js v5 (Credentials + Google OAuth) |
+| Validation       | Zod                                     |
+| Payments         | Stripe                                  |
+| Email            | Resend                                  |
+| SMS/WhatsApp     | Twilio                                  |
+| Calendar         | Google Calendar API                     |
+| Caching          | Upstash Redis                           |
+| Rate Limiting    | Upstash Ratelimit                       |
+| Background Jobs  | Inngest                                 |
+| Error Monitoring | Sentry                                  |
+| Unit Tests       | Vitest + Testing Library                |
+| E2E Tests        | Playwright                              |
+| Containerization | Docker + Docker Compose                 |
+| CI/CD            | GitHub Actions                          |
 
 ---
 
@@ -118,6 +120,7 @@ See [docs/architecture.md](docs/architecture.md) for a detailed architecture wal
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 20+
 - Docker and Docker Compose
 - PostgreSQL 16 (or use Docker)
@@ -128,13 +131,14 @@ See [docs/architecture.md](docs/architecture.md) for a detailed architecture wal
 git clone https://github.com/yourusername/bookflow.git
 cd bookflow
 npm install
+npm run db:generate
 ```
 
 ### 2. Configure environment
 
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your actual values
+# Edit .env.local with your actual values (one file, in the project root)
 ```
 
 ### 3. Start development databases
@@ -194,14 +198,14 @@ See [`.env.example`](.env.example) for all required variables with descriptions.
 
 Required for full functionality:
 
-| Variable | Description |
-|---------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `NEXTAUTH_SECRET` | 32+ character secret for sessions |
-| `STRIPE_SECRET_KEY` | Stripe API key |
+| Variable                | Description                        |
+| ----------------------- | ---------------------------------- |
+| `DATABASE_URL`          | PostgreSQL connection string       |
+| `NEXTAUTH_SECRET`       | 32+ character secret for sessions  |
+| `STRIPE_SECRET_KEY`     | Stripe API key                     |
 | `STRIPE_WEBHOOK_SECRET` | For webhook signature verification |
-| `RESEND_API_KEY` | For transactional email |
-| `ENCRYPTION_KEY` | For encrypting OAuth tokens |
+| `RESEND_API_KEY`        | For transactional email            |
+| `ENCRYPTION_KEY`        | For encrypting OAuth tokens        |
 
 ---
 
@@ -228,13 +232,14 @@ npm run db:seed
 
 **Demo credentials after seeding:**
 
-| Role | Email | Password |
-|------|-------|---------|
-| Owner (PRO plan) | `demo@bookflow.app` | `Demo1234` |
-| Admin | `admin@helixsalon.com` | `Demo1234` |
-| Skin Spa Owner | `owner@clearskinspa.com` | `Demo1234` |
+| Role             | Email                    | Password   |
+| ---------------- | ------------------------ | ---------- |
+| Owner (PRO plan) | `demo@bookflow.app`      | `Demo1234` |
+| Admin            | `admin@helixsalon.com`   | `Demo1234` |
+| Skin Spa Owner   | `owner@clearskinspa.com` | `Demo1234` |
 
 **Public booking pages:**
+
 - `/book/helix-hair-studio`
 - `/book/clearskin-spa`
 
@@ -267,17 +272,17 @@ npm run test:watch
 
 ## Subscription Plans
 
-| Feature | Starter ($29/mo) | Pro ($79/mo) | Business ($149/mo) |
-|---------|:-:|:-:|:-:|
-| Staff members | 1 | Unlimited | Unlimited |
-| Bookings/month | 50 | Unlimited | Unlimited |
-| Email reminders | ✓ | ✓ | ✓ |
-| SMS/WhatsApp | — | ✓ | ✓ |
-| Advanced analytics | — | ✓ | ✓ |
-| Custom branding | — | ✓ | ✓ |
-| Google Calendar | ✓ | ✓ | ✓ |
-| Public API | — | — | ✓ |
-| White-label | — | — | ✓ |
+| Feature            | Starter ($29/mo) | Pro ($79/mo) | Business ($149/mo) |
+| ------------------ | :--------------: | :----------: | :----------------: |
+| Staff members      |        1         |  Unlimited   |     Unlimited      |
+| Bookings/month     |        50        |  Unlimited   |     Unlimited      |
+| Email reminders    |        ✓         |      ✓       |         ✓          |
+| SMS/WhatsApp       |        —         |      ✓       |         ✓          |
+| Advanced analytics |        —         |      ✓       |         ✓          |
+| Custom branding    |        —         |      ✓       |         ✓          |
+| Google Calendar    |        ✓         |      ✓       |         ✓          |
+| Public API         |        —         |      —       |         ✓          |
+| White-label        |        —         |      —       |         ✓          |
 
 All plans include a **14-day free trial**.
 

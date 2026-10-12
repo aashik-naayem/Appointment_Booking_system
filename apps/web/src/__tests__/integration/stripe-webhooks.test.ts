@@ -6,19 +6,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SubscriptionStatus, SubscriptionPlan } from "@bookflow/database";
 
-// Mock Prisma
-const mockSubscription = {
-  upsert: vi.fn(),
-  updateMany: vi.fn(),
-  findFirst: vi.fn(),
-};
-const mockAuditLog = {
-  findFirst: vi.fn(),
-  create: vi.fn(),
-};
-const mockPayment = {
-  upsert: vi.fn(),
-};
+// Mock Prisma (vi.hoisted: vi.mock factories are hoisted above normal top-level consts)
+const { mockSubscription, mockAuditLog, mockPayment } = vi.hoisted(() => {
+  const mockSubscription = {
+    upsert: vi.fn(),
+    updateMany: vi.fn(),
+    findFirst: vi.fn(),
+  };
+  const mockAuditLog = {
+    findFirst: vi.fn(),
+    create: vi.fn(),
+  };
+  const mockPayment = {
+    upsert: vi.fn(),
+  };
+  return { mockSubscription, mockAuditLog, mockPayment };
+});
 
 vi.mock("@bookflow/database", async () => {
   const actual = await vi.importActual<typeof import("@bookflow/database")>("@bookflow/database");
@@ -63,10 +66,12 @@ function makeSubscriptionPayload(overrides: Record<string, unknown> = {}) {
     status: "active",
     metadata: { tenantId: "tenant-test" },
     items: {
-      data: [{
-        price: { id: "price_starter_m", product: "prod_starter" },
-        plan: { interval: "month" },
-      }],
+      data: [
+        {
+          price: { id: "price_starter_m", product: "prod_starter" },
+          plan: { interval: "month" },
+        },
+      ],
     },
     current_period_start: Math.floor(Date.now() / 1000) - 100,
     current_period_end: Math.floor(Date.now() / 1000) + 2592000,
@@ -108,7 +113,9 @@ describe("processStripeWebhook – subscription.created", () => {
       "customer.subscription.updated",
       makeSubscriptionPayload({
         items: {
-          data: [{ price: { id: "price_pro_m", product: "prod_pro" }, plan: { interval: "month" } }],
+          data: [
+            { price: { id: "price_pro_m", product: "prod_pro" }, plan: { interval: "month" } },
+          ],
         },
       }) as Record<string, unknown>,
     );
@@ -136,7 +143,10 @@ describe("processStripeWebhook – subscription.created", () => {
     await processStripeWebhook(
       "evt_004",
       "customer.subscription.created",
-      makeSubscriptionPayload({ status: "trialing", trial_end: trialEnd }) as Record<string, unknown>,
+      makeSubscriptionPayload({ status: "trialing", trial_end: trialEnd }) as Record<
+        string,
+        unknown
+      >,
     );
 
     const call = mockSubscription.upsert.mock.calls[0]![0];
@@ -156,7 +166,10 @@ describe("processStripeWebhook – subscription.deleted", () => {
     await processStripeWebhook(
       "evt_005",
       "customer.subscription.deleted",
-      makeSubscriptionPayload({ ended_at: Math.floor(Date.now() / 1000) }) as Record<string, unknown>,
+      makeSubscriptionPayload({ ended_at: Math.floor(Date.now() / 1000) }) as Record<
+        string,
+        unknown
+      >,
     );
 
     expect(mockSubscription.updateMany).toHaveBeenCalledWith({
@@ -175,11 +188,9 @@ describe("processStripeWebhook – invoice.payment_failed", () => {
   });
 
   it("sets PAST_DUE status and grace period on payment failure", async () => {
-    await processStripeWebhook(
-      "evt_006",
-      "invoice.payment_failed",
-      { subscription: "sub_test123" } as Record<string, unknown>,
-    );
+    await processStripeWebhook("evt_006", "invoice.payment_failed", {
+      subscription: "sub_test123",
+    } as Record<string, unknown>);
 
     expect(mockSubscription.updateMany).toHaveBeenCalledWith({
       where: { stripeSubscriptionId: "sub_test123" },
@@ -209,17 +220,13 @@ describe("processStripeWebhook – invoice.paid", () => {
   });
 
   it("clears grace period and sets ACTIVE on successful payment", async () => {
-    await processStripeWebhook(
-      "evt_007",
-      "invoice.paid",
-      {
-        subscription: "sub_test123",
-        payment_intent: "pi_test123",
-        amount_paid: 2900,
-        currency: "usd",
-        billing_reason: "subscription_cycle",
-      } as Record<string, unknown>,
-    );
+    await processStripeWebhook("evt_007", "invoice.paid", {
+      subscription: "sub_test123",
+      payment_intent: "pi_test123",
+      amount_paid: 2900,
+      currency: "usd",
+      billing_reason: "subscription_cycle",
+    } as Record<string, unknown>);
 
     expect(mockSubscription.updateMany).toHaveBeenCalledWith({
       where: { stripeSubscriptionId: "sub_test123" },

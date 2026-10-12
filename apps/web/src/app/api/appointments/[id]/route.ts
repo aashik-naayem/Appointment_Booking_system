@@ -2,14 +2,20 @@ import { type NextRequest } from "next/server";
 import { apiSuccess, apiError, handleApiError } from "@/lib/utils/api";
 import { requireTenant, requireRole, requireOwnedResource } from "@/lib/permissions";
 import { prisma, UserRole } from "@bookflow/database";
-import { updateAppointmentSchema, cancelBookingSchema, rescheduleBookingSchema } from "@/lib/validations/booking";
-import { cancelBooking, rescheduleBooking, completeAppointment, markNoShow } from "@/lib/services/appointments";
+import {
+  updateAppointmentSchema,
+  cancelBookingSchema,
+  rescheduleBookingSchema,
+} from "@/lib/validations/booking";
+import {
+  cancelBooking,
+  rescheduleBooking,
+  completeAppointment,
+  markNoShow,
+} from "@/lib/services/appointments";
 
 // GET /api/appointments/[id]
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireTenant();
     const { id } = await params;
@@ -38,14 +44,11 @@ export async function GET(
 }
 
 // PATCH /api/appointments/[id]
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireTenant();
     const { id } = await params;
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
 
     // Check if this is a reschedule, cancel, complete, or generic update
     const action = (body as Record<string, unknown>)["action"] as string | undefined;

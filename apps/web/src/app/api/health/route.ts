@@ -15,9 +15,6 @@ export async function GET() {
       { status: 200 },
     );
   } catch {
-    return NextResponse.json(
-      { status: "error", message: "Database unavailable" },
-      { status: 503 },
-    );
+    return NextResponse.json({ status: "error", message: "Database unavailable" }, { status: 503 });
   }
 }

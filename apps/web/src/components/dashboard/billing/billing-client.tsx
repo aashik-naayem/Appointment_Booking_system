@@ -7,6 +7,7 @@ import { CheckCircle2, AlertTriangle, CreditCard, Zap, ArrowUpRight, Loader2 } f
 import { format } from "date-fns";
 import { cn } from "@/lib/utils/cn";
 import type { Subscription, SubscriptionPlan, Tenant } from "@bookflow/database";
+import type { Serialized } from "@/lib/utils/serialize";
 
 const PLANS = [
   {
@@ -21,7 +22,13 @@ const PLANS = [
     name: "Pro",
     monthlyPrice: 79,
     yearlyPrice: 790,
-    features: ["Unlimited staff", "Unlimited bookings", "SMS + WhatsApp", "Advanced analytics", "Custom branding"],
+    features: [
+      "Unlimited staff",
+      "Unlimited bookings",
+      "SMS + WhatsApp",
+      "Advanced analytics",
+      "Custom branding",
+    ],
     popular: true,
   },
   {
@@ -33,17 +40,38 @@ const PLANS = [
   },
 ];
 
-const STATUS_DISPLAY: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-  ACTIVE: { label: "Active", className: "text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300", icon: <CheckCircle2 className="h-4 w-4" /> },
-  TRIALING: { label: "Free Trial", className: "text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300", icon: <Zap className="h-4 w-4" /> },
-  PAST_DUE: { label: "Past Due", className: "text-amber-600 bg-amber-100 dark:bg-amber-900 dark:text-amber-300", icon: <AlertTriangle className="h-4 w-4" /> },
-  CANCELED: { label: "Cancelled", className: "text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300", icon: <AlertTriangle className="h-4 w-4" /> },
-  PAUSED: { label: "Paused", className: "text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-300", icon: null },
-};
+const STATUS_DISPLAY: Record<string, { label: string; className: string; icon: React.ReactNode }> =
+  {
+    ACTIVE: {
+      label: "Active",
+      className: "text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300",
+      icon: <CheckCircle2 className="h-4 w-4" />,
+    },
+    TRIALING: {
+      label: "Free Trial",
+      className: "text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300",
+      icon: <Zap className="h-4 w-4" />,
+    },
+    PAST_DUE: {
+      label: "Past Due",
+      className: "text-amber-600 bg-amber-100 dark:bg-amber-900 dark:text-amber-300",
+      icon: <AlertTriangle className="h-4 w-4" />,
+    },
+    CANCELED: {
+      label: "Cancelled",
+      className: "text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300",
+      icon: <AlertTriangle className="h-4 w-4" />,
+    },
+    PAUSED: {
+      label: "Paused",
+      className: "text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-300",
+      icon: null,
+    },
+  };
 
 type Props = {
-  subscription: Subscription | null;
-  tenant: Tenant;
+  subscription: Serialized<Subscription> | null;
+  tenant: Serialized<Tenant>;
   hasStripeCustomer: boolean;
 };
 
@@ -80,32 +108,38 @@ export function BillingClient({ subscription, tenant, hasStripeCustomer }: Props
 
       {/* Current plan */}
       {subscription && (
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <div className="border-border bg-card rounded-lg border p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Current Plan</p>
+              <p className="text-muted-foreground text-sm">Current Plan</p>
               <div className="mt-1 flex items-center gap-2">
                 <h2 className="text-xl font-bold">{subscription.plan}</h2>
                 {statusConfig && (
-                  <span className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium", statusConfig.className)}>
+                  <span
+                    className={cn(
+                      "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                      statusConfig.className,
+                    )}
+                  >
                     {statusConfig.icon}
                     {statusConfig.label}
                   </span>
                 )}
               </div>
               {subscription.status === "TRIALING" && subscription.trialEnd && (
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Trial ends {format(new Date(subscription.trialEnd), "MMM d, yyyy")}
                 </p>
               )}
               {["ACTIVE", "TRIALING"].includes(subscription.status) && (
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Renews {format(new Date(subscription.currentPeriodEnd), "MMM d, yyyy")}
                 </p>
               )}
               {subscription.status === "PAST_DUE" && subscription.gracePeriodEnd && (
-                <p className="mt-1 text-sm text-amber-600 font-medium">
-                  ⚠ Payment failed. Grace period until {format(new Date(subscription.gracePeriodEnd), "MMM d, yyyy")}
+                <p className="mt-1 text-sm font-medium text-amber-600">
+                  ⚠ Payment failed. Grace period until{" "}
+                  {format(new Date(subscription.gracePeriodEnd), "MMM d, yyyy")}
                 </p>
               )}
             </div>
@@ -114,7 +148,7 @@ export function BillingClient({ subscription, tenant, hasStripeCustomer }: Props
               <button
                 onClick={() => portalMutation.mutate()}
                 disabled={portalMutation.isPending}
-                className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                className="border-border hover:bg-accent flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
               >
                 {portalMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -128,15 +162,24 @@ export function BillingClient({ subscription, tenant, hasStripeCustomer }: Props
           </div>
 
           {subscription.maxBookings && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex items-center justify-between text-sm mb-2">
+            <div className="border-border mt-4 border-t pt-4">
+              <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Monthly Bookings</span>
-                <span className="font-medium">{subscription.bookingsThisMonth} / {subscription.maxBookings}</span>
+                <span className="font-medium">
+                  {subscription.bookingsThisMonth} / {subscription.maxBookings}
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="bg-muted h-2 overflow-hidden rounded-full">
                 <div
-                  className={cn("h-full rounded-full transition-all", subscription.bookingsThisMonth / subscription.maxBookings > 0.9 ? "bg-red-500" : "bg-primary")}
-                  style={{ width: `${Math.min(100, (subscription.bookingsThisMonth / subscription.maxBookings) * 100)}%` }}
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    subscription.bookingsThisMonth / subscription.maxBookings > 0.9
+                      ? "bg-red-500"
+                      : "bg-primary",
+                  )}
+                  style={{
+                    width: `${Math.min(100, (subscription.bookingsThisMonth / subscription.maxBookings) * 100)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -160,14 +203,16 @@ export function BillingClient({ subscription, tenant, hasStripeCustomer }: Props
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Available Plans</h2>
-          <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
+          <div className="border-border bg-muted flex gap-1 rounded-lg border p-1">
             {(["monthly", "yearly"] as const).map((i) => (
               <button
                 key={i}
                 onClick={() => setBillingInterval(i)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-sm font-medium transition-colors capitalize",
-                  billingInterval === i ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  "rounded-md px-3 py-1 text-sm font-medium capitalize transition-colors",
+                  billingInterval === i
+                    ? "bg-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {i}
@@ -187,17 +232,23 @@ export function BillingClient({ subscription, tenant, hasStripeCustomer }: Props
                 key={plan.plan}
                 className={cn(
                   "rounded-lg border p-5 shadow-sm",
-                  plan.popular ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card",
+                  plan.popular
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card",
                   isCurrent && !plan.popular && "border-primary",
                 )}
               >
                 {plan.popular && (
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-75">Most Popular</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-75">
+                    Most Popular
+                  </p>
                 )}
                 <h3 className="text-lg font-bold">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-3xl font-bold">${price}</span>
-                  <span className={cn("text-sm", plan.popular ? "opacity-70" : "text-muted-foreground")}>
+                  <span
+                    className={cn("text-sm", plan.popular ? "opacity-70" : "text-muted-foreground")}
+                  >
                     /{billingInterval === "monthly" ? "mo" : "yr"}
                   </span>
                 </div>
@@ -205,19 +256,26 @@ export function BillingClient({ subscription, tenant, hasStripeCustomer }: Props
                 <ul className="mt-4 space-y-2">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", plan.popular ? "opacity-80" : "text-primary")} />
+                      <CheckCircle2
+                        className={cn(
+                          "mt-0.5 h-3.5 w-3.5 shrink-0",
+                          plan.popular ? "opacity-80" : "text-primary",
+                        )}
+                      />
                       {f}
                     </li>
                   ))}
                 </ul>
 
                 <button
-                  onClick={() => checkoutMutation.mutate({ plan: plan.plan, interval: billingInterval })}
+                  onClick={() =>
+                    checkoutMutation.mutate({ plan: plan.plan, interval: billingInterval })
+                  }
                   disabled={isCurrent || checkoutMutation.isPending}
                   className={cn(
                     "mt-5 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50",
                     plan.popular
-                      ? "bg-white text-primary hover:bg-white/90"
+                      ? "text-primary bg-white hover:bg-white/90"
                       : "bg-primary text-primary-foreground hover:bg-primary/90",
                     isCurrent && "cursor-not-allowed",
                   )}

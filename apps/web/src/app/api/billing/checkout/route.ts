@@ -2,7 +2,11 @@ import { type NextRequest } from "next/server";
 import { apiSuccess, apiError, handleApiError } from "@/lib/utils/api";
 import { requireTenant } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
-import { createCheckoutSession, createStripeCustomer, STRIPE_PRICE_IDS } from "@/lib/integrations/stripe";
+import {
+  createCheckoutSession,
+  createStripeCustomer,
+  STRIPE_PRICE_IDS,
+} from "@/lib/integrations/stripe";
 import { z } from "zod";
 import { SubscriptionPlan } from "@bookflow/database";
 
@@ -14,7 +18,7 @@ const checkoutSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const ctx = await requireTenant();
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
     const { plan, interval } = checkoutSchema.parse(body);
 
     const appUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
@@ -23,11 +27,10 @@ export async function POST(request: NextRequest) {
     let stripeCustomerId = ctx.tenant.stripeCustomerId;
 
     if (!stripeCustomerId) {
-      const customer = await createStripeCustomer(
-        ctx.user.email,
-        ctx.tenant.name,
-        { tenantId: ctx.tenant.id, userId: ctx.user.id },
-      );
+      const customer = await createStripeCustomer(ctx.user.email, ctx.tenant.name, {
+        tenantId: ctx.tenant.id,
+        userId: ctx.user.id,
+      });
 
       await prisma.tenant.update({
         where: { id: ctx.tenant.id },

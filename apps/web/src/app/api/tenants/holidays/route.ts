@@ -27,7 +27,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireRole(UserRole.ADMIN);
-    const body = await req.json() as unknown;
+    const body = (await req.json()) as unknown;
     const input = createHolidaySchema.parse(body);
 
     const holiday = await prisma.holiday.create({

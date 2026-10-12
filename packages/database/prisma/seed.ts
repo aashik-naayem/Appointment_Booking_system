@@ -10,15 +10,25 @@
  *   Staff:  staff@helixsalon.com / Demo1234
  */
 
-import { PrismaClient, UserRole, AppointmentStatus, SubscriptionPlan, SubscriptionStatus, DayOfWeek, NotificationType, NotificationChannel } from "./generated/client";
+import {
+  PrismaClient,
+  UserRole,
+  AppointmentStatus,
+  SubscriptionPlan,
+  SubscriptionStatus,
+  DayOfWeek,
+  NotificationType,
+  NotificationChannel,
+} from "../src/generated/client";
 import bcrypt from "bcryptjs";
 import { addDays, addHours, startOfDay, setHours, setMinutes, subDays } from "date-fns";
 
 const prisma = new PrismaClient();
 
-const DEMO_PASSWORD_HASH = await bcrypt.hash("Demo1234", 12);
+let DEMO_PASSWORD_HASH = "";
 
 async function main() {
+  DEMO_PASSWORD_HASH = await bcrypt.hash("Demo1234", 12);
   console.log("🌱 Seeding BookFlow demo data...\n");
 
   // ============================================================
@@ -94,7 +104,13 @@ async function main() {
   for (const cfg of daysConfig) {
     await prisma.businessHours.upsert({
       where: { tenantId_dayOfWeek: { tenantId: helixTenant.id, dayOfWeek: cfg.day } },
-      create: { tenantId: helixTenant.id, dayOfWeek: cfg.day, startTime: cfg.start, endTime: cfg.end, isOpen: cfg.open },
+      create: {
+        tenantId: helixTenant.id,
+        dayOfWeek: cfg.day,
+        startTime: cfg.start,
+        endTime: cfg.end,
+        isOpen: cfg.open,
+      },
       update: { startTime: cfg.start, endTime: cfg.end, isOpen: cfg.open },
     });
   }
@@ -256,7 +272,10 @@ async function main() {
 
   // Staff service assignments
   const staffServiceMap = [
-    { staffId: staffSarah.id, serviceIds: [services[0]!.id, services[2]!.id, services[3]!.id, services[4]!.id] },
+    {
+      staffId: staffSarah.id,
+      serviceIds: [services[0]!.id, services[2]!.id, services[3]!.id, services[4]!.id],
+    },
     { staffId: staffMike.id, serviceIds: [services[0]!.id, services[1]!.id] },
     { staffId: staffEmma.id, serviceIds: [services[2]!.id, services[3]!.id, services[4]!.id] },
   ];
@@ -273,8 +292,12 @@ async function main() {
 
   // Staff working hours (Mon-Sat)
   const workingDays = [
-    DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-    DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
+    DayOfWeek.MONDAY,
+    DayOfWeek.TUESDAY,
+    DayOfWeek.WEDNESDAY,
+    DayOfWeek.THURSDAY,
+    DayOfWeek.FRIDAY,
+    DayOfWeek.SATURDAY,
   ];
 
   for (const staff of [staffSarah, staffMike, staffEmma]) {
@@ -295,7 +318,13 @@ async function main() {
     // Sunday off
     await prisma.staffWorkingHours.upsert({
       where: { staffId_dayOfWeek: { staffId: staff.id, dayOfWeek: DayOfWeek.SUNDAY } },
-      create: { staffId: staff.id, dayOfWeek: DayOfWeek.SUNDAY, startTime: "10:00", endTime: "16:00", isWorking: false },
+      create: {
+        staffId: staff.id,
+        dayOfWeek: DayOfWeek.SUNDAY,
+        startTime: "10:00",
+        endTime: "16:00",
+        isWorking: false,
+      },
       update: { isWorking: false },
     });
   }
@@ -323,16 +352,36 @@ async function main() {
 
   // Notification preferences
   const notifPrefs = [
-    { type: NotificationType.BOOKING_CONFIRMATION, channel: NotificationChannel.EMAIL, enabled: true },
-    { type: NotificationType.BOOKING_REMINDER, channel: NotificationChannel.EMAIL, enabled: true, hoursBeforeReminder: 24 },
-    { type: NotificationType.BOOKING_REMINDER, channel: NotificationChannel.EMAIL, enabled: true, hoursBeforeReminder: 2 },
-    { type: NotificationType.BOOKING_CANCELLATION, channel: NotificationChannel.EMAIL, enabled: true },
+    {
+      type: NotificationType.BOOKING_CONFIRMATION,
+      channel: NotificationChannel.EMAIL,
+      enabled: true,
+    },
+    {
+      type: NotificationType.BOOKING_REMINDER,
+      channel: NotificationChannel.EMAIL,
+      enabled: true,
+      hoursBeforeReminder: 24,
+    },
+    {
+      type: NotificationType.BOOKING_REMINDER,
+      channel: NotificationChannel.EMAIL,
+      enabled: true,
+      hoursBeforeReminder: 2,
+    },
+    {
+      type: NotificationType.BOOKING_CANCELLATION,
+      channel: NotificationChannel.EMAIL,
+      enabled: true,
+    },
     { type: NotificationType.STAFF_NEW_BOOKING, channel: NotificationChannel.EMAIL, enabled: true },
   ];
 
   for (const pref of notifPrefs) {
     await prisma.notificationPreference.upsert({
-      where: { tenantId_type_channel: { tenantId: helixTenant.id, type: pref.type, channel: pref.channel } },
+      where: {
+        tenantId_type_channel: { tenantId: helixTenant.id, type: pref.type, channel: pref.channel },
+      },
       create: { tenantId: helixTenant.id, ...pref },
       update: {},
     });
@@ -340,27 +389,142 @@ async function main() {
 
   // Customers
   const customers = await Promise.all([
-    createCustomer(helixTenant.id, "Isabella Torres", "isabella@example.com", "+15556789012", 15, 12, 0, 1240),
-    createCustomer(helixTenant.id, "James Wilson", "james@example.com", "+15557890123", 8, 7, 1, 490),
-    createCustomer(helixTenant.id, "Sophia Martinez", "sophia@example.com", "+15558901234", 22, 20, 0, 2890),
-    createCustomer(helixTenant.id, "Daniel Lee", "daniel@example.com", "+15559012345", 5, 4, 0, 275),
-    createCustomer(helixTenant.id, "Olivia Brown", "olivia@example.com", "+15550123456", 3, 2, 1, 135),
+    createCustomer(
+      helixTenant.id,
+      "Isabella Torres",
+      "isabella@example.com",
+      "+15556789012",
+      15,
+      12,
+      0,
+      1240,
+    ),
+    createCustomer(
+      helixTenant.id,
+      "James Wilson",
+      "james@example.com",
+      "+15557890123",
+      8,
+      7,
+      1,
+      490,
+    ),
+    createCustomer(
+      helixTenant.id,
+      "Sophia Martinez",
+      "sophia@example.com",
+      "+15558901234",
+      22,
+      20,
+      0,
+      2890,
+    ),
+    createCustomer(
+      helixTenant.id,
+      "Daniel Lee",
+      "daniel@example.com",
+      "+15559012345",
+      5,
+      4,
+      0,
+      275,
+    ),
+    createCustomer(
+      helixTenant.id,
+      "Olivia Brown",
+      "olivia@example.com",
+      "+15550123456",
+      3,
+      2,
+      1,
+      135,
+    ),
     createCustomer(helixTenant.id, "Noah Davis", "noah@example.com", "+15551234560", 1, 0, 0, 0),
   ]);
 
   // Past appointments (historical data for analytics)
   const now = new Date();
   const apptData = [
-    { customerId: customers[0]!.id, serviceId: services[0]!.id, staffId: staffSarah.id, daysAgo: 2, status: AppointmentStatus.COMPLETED, amount: 85 },
-    { customerId: customers[1]!.id, serviceId: services[1]!.id, staffId: staffMike.id, daysAgo: 3, status: AppointmentStatus.COMPLETED, amount: 55 },
-    { customerId: customers[2]!.id, serviceId: services[3]!.id, staffId: staffEmma.id, daysAgo: 5, status: AppointmentStatus.COMPLETED, amount: 195 },
-    { customerId: customers[2]!.id, serviceId: services[2]!.id, staffId: staffEmma.id, daysAgo: 7, status: AppointmentStatus.COMPLETED, amount: 145 },
-    { customerId: customers[3]!.id, serviceId: services[1]!.id, staffId: staffMike.id, daysAgo: 10, status: AppointmentStatus.COMPLETED, amount: 55 },
-    { customerId: customers[4]!.id, serviceId: services[0]!.id, staffId: staffSarah.id, daysAgo: 14, status: AppointmentStatus.CANCELLED, amount: 85 },
-    { customerId: customers[0]!.id, serviceId: services[4]!.id, staffId: staffSarah.id, daysAgo: 15, status: AppointmentStatus.COMPLETED, amount: 45 },
-    { customerId: customers[1]!.id, serviceId: services[1]!.id, staffId: staffMike.id, daysAgo: 20, status: AppointmentStatus.NO_SHOW, amount: 55 },
-    { customerId: customers[2]!.id, serviceId: services[0]!.id, staffId: staffSarah.id, daysAgo: 28, status: AppointmentStatus.COMPLETED, amount: 85 },
-    { customerId: customers[3]!.id, serviceId: services[4]!.id, staffId: staffEmma.id, daysAgo: 30, status: AppointmentStatus.COMPLETED, amount: 45 },
+    {
+      customerId: customers[0]!.id,
+      serviceId: services[0]!.id,
+      staffId: staffSarah.id,
+      daysAgo: 2,
+      status: AppointmentStatus.COMPLETED,
+      amount: 85,
+    },
+    {
+      customerId: customers[1]!.id,
+      serviceId: services[1]!.id,
+      staffId: staffMike.id,
+      daysAgo: 3,
+      status: AppointmentStatus.COMPLETED,
+      amount: 55,
+    },
+    {
+      customerId: customers[2]!.id,
+      serviceId: services[3]!.id,
+      staffId: staffEmma.id,
+      daysAgo: 5,
+      status: AppointmentStatus.COMPLETED,
+      amount: 195,
+    },
+    {
+      customerId: customers[2]!.id,
+      serviceId: services[2]!.id,
+      staffId: staffEmma.id,
+      daysAgo: 7,
+      status: AppointmentStatus.COMPLETED,
+      amount: 145,
+    },
+    {
+      customerId: customers[3]!.id,
+      serviceId: services[1]!.id,
+      staffId: staffMike.id,
+      daysAgo: 10,
+      status: AppointmentStatus.COMPLETED,
+      amount: 55,
+    },
+    {
+      customerId: customers[4]!.id,
+      serviceId: services[0]!.id,
+      staffId: staffSarah.id,
+      daysAgo: 14,
+      status: AppointmentStatus.CANCELLED,
+      amount: 85,
+    },
+    {
+      customerId: customers[0]!.id,
+      serviceId: services[4]!.id,
+      staffId: staffSarah.id,
+      daysAgo: 15,
+      status: AppointmentStatus.COMPLETED,
+      amount: 45,
+    },
+    {
+      customerId: customers[1]!.id,
+      serviceId: services[1]!.id,
+      staffId: staffMike.id,
+      daysAgo: 20,
+      status: AppointmentStatus.NO_SHOW,
+      amount: 55,
+    },
+    {
+      customerId: customers[2]!.id,
+      serviceId: services[0]!.id,
+      staffId: staffSarah.id,
+      daysAgo: 28,
+      status: AppointmentStatus.COMPLETED,
+      amount: 85,
+    },
+    {
+      customerId: customers[3]!.id,
+      serviceId: services[4]!.id,
+      staffId: staffEmma.id,
+      daysAgo: 30,
+      status: AppointmentStatus.COMPLETED,
+      amount: 45,
+    },
   ];
 
   for (let i = 0; i < apptData.length; i++) {
@@ -394,12 +558,48 @@ async function main() {
 
   // Future appointments (today + upcoming)
   const upcomingAppts = [
-    { customerId: customers[0]!.id, serviceId: services[0]!.id, staffId: staffSarah.id, daysFromNow: 0, hour: 11 },
-    { customerId: customers[1]!.id, serviceId: services[1]!.id, staffId: staffMike.id, daysFromNow: 0, hour: 14 },
-    { customerId: customers[2]!.id, serviceId: services[3]!.id, staffId: staffEmma.id, daysFromNow: 1, hour: 10 },
-    { customerId: customers[3]!.id, serviceId: services[1]!.id, staffId: staffMike.id, daysFromNow: 2, hour: 15 },
-    { customerId: customers[4]!.id, serviceId: services[2]!.id, staffId: staffEmma.id, daysFromNow: 3, hour: 13 },
-    { customerId: customers[5]!.id, serviceId: services[0]!.id, staffId: staffSarah.id, daysFromNow: 5, hour: 16 },
+    {
+      customerId: customers[0]!.id,
+      serviceId: services[0]!.id,
+      staffId: staffSarah.id,
+      daysFromNow: 0,
+      hour: 11,
+    },
+    {
+      customerId: customers[1]!.id,
+      serviceId: services[1]!.id,
+      staffId: staffMike.id,
+      daysFromNow: 0,
+      hour: 14,
+    },
+    {
+      customerId: customers[2]!.id,
+      serviceId: services[3]!.id,
+      staffId: staffEmma.id,
+      daysFromNow: 1,
+      hour: 10,
+    },
+    {
+      customerId: customers[3]!.id,
+      serviceId: services[1]!.id,
+      staffId: staffMike.id,
+      daysFromNow: 2,
+      hour: 15,
+    },
+    {
+      customerId: customers[4]!.id,
+      serviceId: services[2]!.id,
+      staffId: staffEmma.id,
+      daysFromNow: 3,
+      hour: 13,
+    },
+    {
+      customerId: customers[5]!.id,
+      serviceId: services[0]!.id,
+      staffId: staffSarah.id,
+      daysFromNow: 5,
+      hour: 16,
+    },
   ];
 
   for (let i = 0; i < upcomingAppts.length; i++) {

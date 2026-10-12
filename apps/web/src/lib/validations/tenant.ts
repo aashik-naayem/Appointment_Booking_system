@@ -19,18 +19,27 @@ export const createTenantSchema = z.object({
   postalCode: z.string().optional(),
 });
 
-export const updateTenantSchema = createTenantSchema.partial().omit({ slug: true }).extend({
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  bookingLeadTime: z.number().min(0).max(1440).optional(),
-  bookingWindowDays: z.number().min(1).max(365).optional(),
-  cancellationHours: z.number().min(0).max(168).optional(),
-  requireDeposit: z.boolean().optional(),
-  depositPercentage: z.number().min(0).max(100).optional(),
-  autoConfirm: z.boolean().optional(),
-  allowGuestBooking: z.boolean().optional(),
-  isPublic: z.boolean().optional(),
-});
+export const updateTenantSchema = createTenantSchema
+  .partial()
+  .omit({ slug: true })
+  .extend({
+    primaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    secondaryColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    bookingLeadTime: z.number().min(0).max(1440).optional(),
+    bookingWindowDays: z.number().min(1).max(365).optional(),
+    cancellationHours: z.number().min(0).max(168).optional(),
+    requireDeposit: z.boolean().optional(),
+    depositPercentage: z.number().min(0).max(100).optional(),
+    autoConfirm: z.boolean().optional(),
+    allowGuestBooking: z.boolean().optional(),
+    isPublic: z.boolean().optional(),
+  });
 
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
 export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;

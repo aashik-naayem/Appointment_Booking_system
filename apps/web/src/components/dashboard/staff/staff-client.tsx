@@ -11,9 +11,10 @@ import { createStaffSchema, type CreateStaffInput } from "@/lib/validations/staf
 import { cn } from "@/lib/utils/cn";
 import Image from "next/image";
 import type { Staff } from "@bookflow/database";
+import type { Serialized } from "@/lib/utils/serialize";
 import Link from "next/link";
 
-type StaffWithRelations = Staff & {
+type StaffWithRelations = Serialized<Staff> & {
   services: { service: { id: string; name: string } }[];
   workingHours: { dayOfWeek: string; isWorking: boolean }[];
   _count: { appointments: number };
@@ -54,7 +55,9 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
       form.reset();
     },
     onError: (err: unknown) => {
-      const msg = axios.isAxiosError(err) ? (err.response?.data as { error?: string })?.error : "Failed";
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { error?: string })?.error
+        : "Failed";
       toast.error(msg ?? "Failed to add staff");
     },
   });
@@ -80,7 +83,9 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
       setDeleteId(null);
     },
     onError: (err: unknown) => {
-      const msg = axios.isAxiosError(err) ? (err.response?.data as { error?: string })?.error : "Failed";
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { error?: string })?.error
+        : "Failed";
       toast.error(msg ?? "Cannot delete staff");
     },
   });
@@ -118,7 +123,7 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
             form.reset({ commission: 0 });
             setShowForm(true);
           }}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium"
         >
           <Plus className="h-4 w-4" />
           Add Staff
@@ -126,12 +131,12 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
       </div>
 
       {staffList.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
-          <div className="rounded-full bg-muted p-3 mb-3">
-            <User className="h-6 w-6 text-muted-foreground" />
+        <div className="border-border flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+          <div className="bg-muted mb-3 rounded-full p-3">
+            <User className="text-muted-foreground h-6 w-6" />
           </div>
           <p className="text-sm font-medium">No staff yet</p>
-          <p className="text-sm text-muted-foreground">Add your first team member</p>
+          <p className="text-muted-foreground text-sm">Add your first team member</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -148,24 +153,26 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-border px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="border-border bg-card max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border shadow-xl">
+            <div className="border-border border-b px-6 py-4">
               <h2 className="text-lg font-semibold">
                 {editingStaff ? "Edit Staff" : "Add Staff Member"}
               </h2>
             </div>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Name *</label>
                   <input
                     {...form.register("name")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Jane Smith"
                   />
                   {form.formState.errors.name && (
-                    <p className="mt-1 text-xs text-destructive">{form.formState.errors.name.message}</p>
+                    <p className="text-destructive mt-1 text-xs">
+                      {form.formState.errors.name.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -173,10 +180,12 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
                   <input
                     {...form.register("email")}
                     type="email"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                   />
                   {form.formState.errors.email && (
-                    <p className="mt-1 text-xs text-destructive">{form.formState.errors.email.message}</p>
+                    <p className="text-destructive mt-1 text-xs">
+                      {form.formState.errors.email.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -187,14 +196,14 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
                   <input
                     {...form.register("phone")}
                     type="tel"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                   />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Title</label>
                   <input
                     {...form.register("title")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                     placeholder="Senior Stylist"
                   />
                 </div>
@@ -208,7 +217,7 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
                     type="number"
                     min="0"
                     max="100"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-input bg-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                   />
                 </div>
                 <div>
@@ -216,7 +225,7 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
                   <input
                     {...form.register("color")}
                     type="color"
-                    className="w-full h-10 rounded-md border border-input bg-background px-1 py-1 cursor-pointer"
+                    className="border-input bg-background h-10 w-full cursor-pointer rounded-md border px-1 py-1"
                   />
                 </div>
               </div>
@@ -224,9 +233,12 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
               {services.length > 0 && (
                 <div>
                   <label className="mb-2 block text-sm font-medium">Services</label>
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  <div className="max-h-36 space-y-1.5 overflow-y-auto">
                     {services.map((svc) => (
-                      <label key={svc.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <label
+                        key={svc.id}
+                        className="flex cursor-pointer items-center gap-2 text-sm"
+                      >
                         <input
                           type="checkbox"
                           value={svc.id}
@@ -245,7 +257,7 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
                 <textarea
                   {...form.register("bio")}
                   rows={2}
-                  className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="border-input bg-background focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                   placeholder="Brief bio..."
                 />
               </div>
@@ -253,15 +265,18 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowForm(false); setEditingStaff(null); }}
-                  className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingStaff(null);
+                  }}
+                  className="border-border hover:bg-accent flex-1 rounded-lg border px-4 py-2 text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {editingStaff ? "Save Changes" : "Add Staff"}
                 </button>
@@ -273,20 +288,23 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
 
       {/* Delete Confirm */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="border-border bg-card w-full max-w-sm rounded-xl border p-6 shadow-xl">
             <h3 className="font-semibold">Remove Staff Member</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-sm">
               Staff with upcoming appointments cannot be removed.
             </p>
             <div className="mt-4 flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="border-border hover:bg-accent flex-1 rounded-lg border px-4 py-2 text-sm font-medium"
+              >
                 Cancel
               </button>
               <button
                 onClick={() => deleteMutation.mutate(deleteId)}
                 disabled={deleteMutation.isPending}
-                className="flex-1 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 flex-1 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
                 {deleteMutation.isPending ? "Removing..." : "Remove"}
               </button>
@@ -298,12 +316,20 @@ export function StaffClient({ initialStaff, services, tenantId }: Props) {
   );
 }
 
-function StaffCard({ staff, onEdit, onDelete }: { staff: StaffWithRelations; onEdit: () => void; onDelete: () => void }) {
+function StaffCard({
+  staff,
+  onEdit,
+  onDelete,
+}: {
+  staff: StaffWithRelations;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const workingDays = staff.workingHours.filter((h) => h.isWorking).length;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <div className="border-border bg-card rounded-lg border p-5 shadow-sm">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div
@@ -313,36 +339,56 @@ function StaffCard({ staff, onEdit, onDelete }: { staff: StaffWithRelations; onE
             {staff.avatarUrl ? (
               <Image src={staff.avatarUrl} alt={staff.name} fill className="object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-white font-semibold">
+              <div className="flex h-full w-full items-center justify-center font-semibold text-white">
                 {staff.name[0]?.toUpperCase()}
               </div>
             )}
           </div>
           <div>
             <h3 className="font-semibold">{staff.name}</h3>
-            {staff.title && <p className="text-xs text-muted-foreground">{staff.title}</p>}
-            <span className={cn(
-              "inline-block mt-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium",
-              staff.status === "ACTIVE" ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" : "bg-muted text-muted-foreground"
-            )}>
+            {staff.title && <p className="text-muted-foreground text-xs">{staff.title}</p>}
+            <span
+              className={cn(
+                "mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-xs font-medium",
+                staff.status === "ACTIVE"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
               {staff.status}
             </span>
           </div>
         </div>
 
         <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="rounded-md p-1 hover:bg-accent">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="hover:bg-accent rounded-md p-1">
             <MoreHorizontal className="h-4 w-4" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-7 z-10 w-44 rounded-md border border-border bg-card shadow-lg py-1">
-              <button onClick={() => { onEdit(); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent">
+            <div className="border-border bg-card absolute right-0 top-7 z-10 w-44 rounded-md border py-1 shadow-lg">
+              <button
+                onClick={() => {
+                  onEdit();
+                  setMenuOpen(false);
+                }}
+                className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+              >
                 <Pencil className="h-3.5 w-3.5" /> Edit
               </button>
-              <Link href={`/staff/${staff.id}`} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
+              <Link
+                href={`/staff/${staff.id}`}
+                className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+                onClick={() => setMenuOpen(false)}
+              >
                 <Calendar className="h-3.5 w-3.5" /> Working Hours
               </Link>
-              <button onClick={() => { onDelete(); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10">
+              <button
+                onClick={() => {
+                  onDelete();
+                  setMenuOpen(false);
+                }}
+                className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+              >
                 <Trash2 className="h-3.5 w-3.5" /> Remove
               </button>
             </div>
@@ -350,7 +396,7 @@ function StaffCard({ staff, onEdit, onDelete }: { staff: StaffWithRelations; onE
         </div>
       </div>
 
-      <div className="mt-4 space-y-1.5 text-sm text-muted-foreground">
+      <div className="text-muted-foreground mt-4 space-y-1.5 text-sm">
         <div className="flex items-center gap-2">
           <Mail className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{staff.email}</span>
@@ -363,7 +409,7 @@ function StaffCard({ staff, onEdit, onDelete }: { staff: StaffWithRelations; onE
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+      <div className="text-muted-foreground mt-3 flex items-center justify-between text-xs">
         <span>{staff.services.length} services</span>
         <span>{workingDays > 0 ? `${workingDays} days/week` : "Custom hours"}</span>
         <span>{staff._count.appointments} appointments</span>

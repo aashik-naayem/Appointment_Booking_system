@@ -1,6 +1,6 @@
 /**
  * Stripe Webhook Handler
- * 
+ *
  * IMPORTANT: Subscription state is ALWAYS synced from Stripe webhooks.
  * Never trust frontend payment state.
  * All webhook processing is idempotent.
@@ -31,19 +31,19 @@ export async function processStripeWebhook(
   switch (eventType) {
     case "customer.subscription.created":
     case "customer.subscription.updated":
-      await handleSubscriptionUpsert(payload as Stripe.Subscription);
+      await handleSubscriptionUpsert(payload as unknown as Stripe.Subscription);
       break;
 
     case "customer.subscription.deleted":
-      await handleSubscriptionDeleted(payload as Stripe.Subscription);
+      await handleSubscriptionDeleted(payload as unknown as Stripe.Subscription);
       break;
 
     case "invoice.paid":
-      await handleInvoicePaid(payload as Stripe.Invoice);
+      await handleInvoicePaid(payload as unknown as Stripe.Invoice);
       break;
 
     case "invoice.payment_failed":
-      await handleInvoicePaymentFailed(payload as Stripe.Invoice);
+      await handleInvoicePaymentFailed(payload as unknown as Stripe.Invoice);
       break;
 
     default:
@@ -91,12 +91,8 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
       plan,
       status,
       interval: subscription.items.data[0]?.plan.interval ?? "month",
-      trialStart: subscription.trial_start
-        ? new Date(subscription.trial_start * 1000)
-        : null,
-      trialEnd: subscription.trial_end
-        ? new Date(subscription.trial_end * 1000)
-        : null,
+      trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+      trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
       currentPeriodStart: new Date(subscription.current_period_start * 1000),
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
@@ -109,18 +105,12 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
       plan,
       status,
       interval: subscription.items.data[0]?.plan.interval ?? "month",
-      trialStart: subscription.trial_start
-        ? new Date(subscription.trial_start * 1000)
-        : null,
-      trialEnd: subscription.trial_end
-        ? new Date(subscription.trial_end * 1000)
-        : null,
+      trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+      trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
       currentPeriodStart: new Date(subscription.current_period_start * 1000),
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
-      canceledAt: subscription.canceled_at
-        ? new Date(subscription.canceled_at * 1000)
-        : null,
+      canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
       maxStaff: planLimits.maxStaff,
       maxBookings: planLimits.maxBookingsPerMonth,
       gracePeriodEnd: null,
@@ -157,10 +147,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   if (sub) {
     await prisma.payment.upsert({
-      where: { stripePaymentIntentId: invoice.payment_intent as string ?? `invoice_${invoice.id}` },
+      where: {
+        stripePaymentIntentId: (invoice.payment_intent as string) ?? `invoice_${invoice.id}`,
+      },
       create: {
         tenantId: sub.tenantId,
-        stripePaymentIntentId: invoice.payment_intent as string ?? `invoice_${invoice.id}`,
+        stripePaymentIntentId: (invoice.payment_intent as string) ?? `invoice_${invoice.id}`,
         amount: invoice.amount_paid / 100,
         currency: invoice.currency,
         status: "PAID",

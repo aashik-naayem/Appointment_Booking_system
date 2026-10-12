@@ -37,7 +37,9 @@ export async function GET(
     if (!appointment) return apiError("Booking not found", 404);
 
     // Don't expose internal notes or IDs to public
-    const { internalNotes: _, ...safeAppointment } = appointment as typeof appointment & { internalNotes?: string | null };
+    const { internalNotes: _, ...safeAppointment } = appointment as typeof appointment & {
+      internalNotes?: string | null;
+    };
     return apiSuccess(safeAppointment);
   } catch (error) {
     return handleApiError(error);

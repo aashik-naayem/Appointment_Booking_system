@@ -48,13 +48,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-background min-h-screen font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"
@@ -64,12 +62,7 @@ export default function RootLayout({
         >
           <QueryProvider>
             {children}
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              duration={4000}
-            />
+            <Toaster position="top-right" richColors closeButton duration={4000} />
           </QueryProvider>
         </ThemeProvider>
       </body>

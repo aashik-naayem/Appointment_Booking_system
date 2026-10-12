@@ -4,13 +4,21 @@
  * Route handlers call these functions — never query Prisma directly.
  */
 
-import { prisma, AppointmentStatus, PaymentStatus } from "@bookflow/database";
-import { isSlotAvailable, calculateAppointmentEndTime, invalidateAvailabilityCache } from "./availability";
+import { prisma, Prisma, AppointmentStatus, PaymentStatus } from "@bookflow/database";
+import {
+  isSlotAvailable,
+  calculateAppointmentEndTime,
+  invalidateAvailabilityCache,
+} from "./availability";
 import { sendNotification } from "./notifications";
 import { syncCalendarEvent } from "@/lib/integrations/google-calendar";
 import { inngest } from "@/lib/jobs/inngest";
 import { checkBookingLimit } from "@/lib/permissions";
-import type { CreateBookingInput, RescheduleBookingInput, CancelBookingInput } from "@/lib/validations/booking";
+import type {
+  CreateBookingInput,
+  RescheduleBookingInput,
+  CancelBookingInput,
+} from "@/lib/validations/booking";
 import { NotificationType } from "@bookflow/database";
 
 // ============================================================
@@ -21,7 +29,9 @@ export async function createBooking(tenantId: string, input: CreateBookingInput)
   // 1. Check booking limits
   const limitCheck = await checkBookingLimit(tenantId);
   if (!limitCheck.allowed) {
-    throw new Error(`Booking limit reached. You've used ${limitCheck.current} of ${limitCheck.limit} bookings this month.`);
+    throw new Error(
+      `Booking limit reached. You've used ${limitCheck.current} of ${limitCheck.limit} bookings this month.`,
+    );
   }
 
   // 2. Load service
@@ -74,68 +84,82 @@ export async function createBooking(tenantId: string, input: CreateBookingInput)
 
   // 6. Calculate pricing
   const depositAmount = tenant.requireDeposit
-    ? service.depositAmount ?? service.price.toNumber() * (tenant.depositPercentage.toNumber() / 100)
+    ? (service.depositAmount ??
+      service.price.toNumber() * (tenant.depositPercentage.toNumber() / 100))
     : 0;
 
-  // 7. Create appointment transactionally
-  const appointment = await prisma.$transaction(async (tx) => {
-    // Double-check availability inside transaction (prevents race conditions)
-    const conflictCount = await tx.appointment.count({
-      where: {
-        tenantId,
-        staffId: input.staffId,
-        status: { notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW] },
-        startTime: { lt: endTime },
-        endTime: { gt: startTime },
+  // 7. Create appointment transactionally.
+  // Serializable isolation makes the count-then-insert guard race-safe: if two
+  // customers grab the same slot at the same moment, Postgres aborts one of the
+  // transactions with P2034 (mapped to a friendly error below).
+  const appointment = await prisma
+    .$transaction(
+      async (tx) => {
+        // Double-check availability inside transaction (prevents race conditions)
+        const conflictCount = await tx.appointment.count({
+          where: {
+            tenantId,
+            staffId: input.staffId,
+            status: { notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW] },
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
+          },
+        });
+
+        if (conflictCount >= service.maxConcurrent) {
+          throw new Error("Time slot was just booked. Please select another time.");
+        }
+
+        const apt = await tx.appointment.create({
+          data: {
+            tenantId,
+            serviceId: input.serviceId,
+            staffId: input.staffId,
+            customerId: customer.id,
+            startTime,
+            endTime,
+            timezone: input.timezone,
+            duration: service.duration,
+            status: tenant.autoConfirm ? AppointmentStatus.CONFIRMED : AppointmentStatus.PENDING,
+            confirmedAt: tenant.autoConfirm ? new Date() : null,
+            servicePrice: service.price,
+            depositAmount,
+            totalAmount: service.price,
+            customerNotes: input.customerNotes,
+          },
+          include: {
+            service: { select: { name: true, duration: true } },
+            staff: { select: { name: true, email: true } },
+            customer: { select: { name: true, email: true, phone: true } },
+            tenant: { select: { name: true, timezone: true } },
+          },
+        });
+
+        // Increment booking counter
+        await tx.subscription.updateMany({
+          where: { tenantId },
+          data: { bookingsThisMonth: { increment: 1 } },
+        });
+
+        // Update customer stats
+        await tx.customer.update({
+          where: { id: customer.id },
+          data: {
+            totalBookings: { increment: 1 },
+            lastVisitAt: startTime,
+          },
+        });
+
+        return apt;
       },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .catch((error: unknown) => {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+        throw new Error("Time slot was just booked. Please select another time.");
+      }
+      throw error;
     });
-
-    if (conflictCount >= service.maxConcurrent) {
-      throw new Error("Time slot was just booked. Please select another time.");
-    }
-
-    const apt = await tx.appointment.create({
-      data: {
-        tenantId,
-        serviceId: input.serviceId,
-        staffId: input.staffId,
-        customerId: customer.id,
-        startTime,
-        endTime,
-        timezone: input.timezone,
-        duration: service.duration,
-        status: tenant.autoConfirm ? AppointmentStatus.CONFIRMED : AppointmentStatus.PENDING,
-        confirmedAt: tenant.autoConfirm ? new Date() : null,
-        servicePrice: service.price,
-        depositAmount,
-        totalAmount: service.price,
-        customerNotes: input.customerNotes,
-      },
-      include: {
-        service: { select: { name: true, duration: true } },
-        staff: { select: { name: true, email: true } },
-        customer: { select: { name: true, email: true, phone: true } },
-        tenant: { select: { name: true, timezone: true } },
-      },
-    });
-
-    // Increment booking counter
-    await tx.subscription.updateMany({
-      where: { tenantId },
-      data: { bookingsThisMonth: { increment: 1 } },
-    });
-
-    // Update customer stats
-    await tx.customer.update({
-      where: { id: customer.id },
-      data: {
-        totalBookings: { increment: 1 },
-        lastVisitAt: startTime,
-      },
-    });
-
-    return apt;
-  });
 
   // 8. Post-creation side effects (async - don't block the response)
   void postBookingCreation(appointment, tenantId);

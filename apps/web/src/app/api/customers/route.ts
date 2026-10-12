@@ -1,5 +1,10 @@
 import { type NextRequest } from "next/server";
-import { apiSuccess, handleApiError, parsePaginationParams, getPaginationMeta } from "@/lib/utils/api";
+import {
+  apiSuccess,
+  handleApiError,
+  parsePaginationParams,
+  getPaginationMeta,
+} from "@/lib/utils/api";
 import { requireTenant } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
 

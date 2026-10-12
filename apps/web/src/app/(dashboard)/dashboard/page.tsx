@@ -3,6 +3,7 @@ import { prisma, AppointmentStatus } from "@bookflow/database";
 import { startOfDay, endOfDay, addDays, subDays } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { DashboardOverview } from "@/components/dashboard/overview";
+import { serialize } from "@/lib/utils/serialize";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -56,9 +57,9 @@ async function getDashboardData(tenantId: string, timezone: string) {
         deletedAt: null,
       },
       include: {
-        service: { select: { name: true } },
-        staff: { select: { name: true } },
-        customer: { select: { name: true } },
+        service: { select: { name: true, duration: true, price: true } },
+        staff: { select: { name: true, avatarUrl: true } },
+        customer: { select: { name: true, email: true } },
       },
       orderBy: { startTime: "asc" },
       take: 10,
@@ -98,9 +99,7 @@ async function getDashboardData(tenantId: string, timezone: string) {
   const thisWeekRevenue = weekRevenue._sum.totalAmount?.toNumber() ?? 0;
   const lastWeekRevenue = weekRevenueLastWeek._sum.totalAmount?.toNumber() ?? 0;
   const revenueChange =
-    lastWeekRevenue > 0
-      ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100
-      : 0;
+    lastWeekRevenue > 0 ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100 : 0;
 
   return {
     todayAppointments,
@@ -119,5 +118,5 @@ export default async function DashboardPage() {
   const ctx = await requireTenant();
   const data = await getDashboardData(ctx.tenant.id, ctx.tenant.timezone);
 
-  return <DashboardOverview data={data} tenant={ctx.tenant} />;
+  return <DashboardOverview data={serialize(data)} tenant={serialize(ctx.tenant)} />;
 }

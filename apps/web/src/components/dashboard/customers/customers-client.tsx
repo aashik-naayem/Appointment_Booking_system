@@ -4,7 +4,17 @@ import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
-import { Search, Users, Mail, Phone, Star, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Users,
+  Mail,
+  Phone,
+  Star,
+  ShieldOff,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -18,9 +28,18 @@ type ApiResponse = {
 };
 
 const STATUS_BADGES: Record<CustomerStatus, { label: string; className: string }> = {
-  ACTIVE: { label: "Active", className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
-  BLACKLISTED: { label: "Blacklisted", className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" },
-  VIP: { label: "VIP", className: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300" },
+  ACTIVE: {
+    label: "Active",
+    className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  },
+  BLACKLISTED: {
+    label: "Blacklisted",
+    className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  },
+  VIP: {
+    label: "VIP",
+    className: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  },
 };
 
 export function CustomersClient({ tenantId }: { tenantId: string }) {
@@ -74,8 +93,8 @@ export function CustomersClient({ tenantId }: { tenantId: string }) {
 
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative max-w-sm flex-1">
+          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <input
             value={search}
             onChange={(e) => {
@@ -83,13 +102,16 @@ export function CustomersClient({ tenantId }: { tenantId: string }) {
               debounce(e.target.value);
             }}
             placeholder="Search customers..."
-            className="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="border-input bg-background focus-visible:ring-ring w-full rounded-md border py-2 pl-9 pr-4 text-sm focus-visible:outline-none focus-visible:ring-2"
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
+          className="border-input bg-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
         >
           <option value="">All Statuses</option>
           <option value="ACTIVE">Active</option>
@@ -99,44 +121,54 @@ export function CustomersClient({ tenantId }: { tenantId: string }) {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+      <div className="border-border bg-card overflow-hidden rounded-lg border shadow-sm">
         {isLoading ? (
-          <div className="space-y-0 divide-y divide-border">
+          <div className="divide-border space-y-0 divide-y">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-4">
-                <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
+                <div className="bg-muted h-9 w-9 animate-pulse rounded-full" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-48 animate-pulse rounded bg-muted" />
+                  <div className="bg-muted h-4 w-32 animate-pulse rounded" />
+                  <div className="bg-muted h-3 w-48 animate-pulse rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : customers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Users className="h-10 w-10 text-muted-foreground/40" />
-            <p className="mt-3 text-sm text-muted-foreground">No customers found</p>
+            <Users className="text-muted-foreground/40 h-10 w-10" />
+            <p className="text-muted-foreground mt-3 text-sm">No customers found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/40">
-                  <th className="px-6 py-3 text-left font-medium text-muted-foreground">Customer</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Contact</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Bookings</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Total Spent</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Last Visit</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                <tr className="border-border bg-muted/40 border-b">
+                  <th className="text-muted-foreground px-6 py-3 text-left font-medium">
+                    Customer
+                  </th>
+                  <th className="text-muted-foreground px-4 py-3 text-left font-medium">Contact</th>
+                  <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                    Bookings
+                  </th>
+                  <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                    Total Spent
+                  </th>
+                  <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                    Last Visit
+                  </th>
+                  <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-border divide-y">
                 {customers.map((c) => (
                   <CustomerRow
                     key={c.id}
                     customer={c}
-                    onStatusChange={(status) => updateMutation.mutate({ id: c.id, data: { status } })}
+                    onStatusChange={(status) =>
+                      updateMutation.mutate({ id: c.id, data: { status } })
+                    }
                   />
                 ))}
               </tbody>
@@ -148,7 +180,7 @@ export function CustomersClient({ tenantId }: { tenantId: string }) {
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Showing {(meta.page - 1) * meta.pageSize + 1}–
             {Math.min(meta.page * meta.pageSize, meta.total)} of {meta.total}
           </p>
@@ -156,15 +188,17 @@ export function CustomersClient({ tenantId }: { tenantId: string }) {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent disabled:opacity-50"
+              className="border-border hover:bg-accent flex h-8 w-8 items-center justify-center rounded-md border disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm">{page} / {meta.totalPages}</span>
+            <span className="text-sm">
+              {page} / {meta.totalPages}
+            </span>
             <button
               onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
               disabled={page === meta.totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:bg-accent disabled:opacity-50"
+              className="border-border hover:bg-accent flex h-8 w-8 items-center justify-center rounded-md border disabled:opacity-50"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -188,25 +222,30 @@ function CustomerRow({
   return (
     <tr className="hover:bg-muted/30 transition-colors">
       <td className="px-6 py-4">
-        <Link href={`/customers/${customer.id}`} className="flex items-center gap-3 hover:underline">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
+        <Link
+          href={`/customers/${customer.id}`}
+          className="flex items-center gap-3 hover:underline"
+        >
+          <div className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
             {customer.name[0]?.toUpperCase()}
           </div>
           <div>
             <p className="font-medium">{customer.name}</p>
             {customer.noShowCount > 0 && (
-              <p className="text-xs text-amber-600">{customer.noShowCount} no-show{customer.noShowCount > 1 ? "s" : ""}</p>
+              <p className="text-xs text-amber-600">
+                {customer.noShowCount} no-show{customer.noShowCount > 1 ? "s" : ""}
+              </p>
             )}
           </div>
         </Link>
       </td>
       <td className="px-4 py-4">
         <div className="space-y-0.5">
-          <p className="flex items-center gap-1 text-muted-foreground">
+          <p className="text-muted-foreground flex items-center gap-1">
             <Mail className="h-3 w-3" /> {customer.email}
           </p>
           {customer.phone && (
-            <p className="flex items-center gap-1 text-muted-foreground">
+            <p className="text-muted-foreground flex items-center gap-1">
               <Phone className="h-3 w-3" /> {customer.phone}
             </p>
           )}
@@ -217,7 +256,7 @@ function CustomerRow({
         <span className="text-muted-foreground"> / {customer.completedBookings} completed</span>
       </td>
       <td className="px-4 py-4 font-medium">${Number(customer.totalSpent).toFixed(2)}</td>
-      <td className="px-4 py-4 text-muted-foreground text-xs">
+      <td className="text-muted-foreground px-4 py-4 text-xs">
         {customer.lastVisitAt ? format(new Date(customer.lastVisitAt), "MMM d, yyyy") : "—"}
       </td>
       <td className="px-4 py-4">
@@ -227,26 +266,48 @@ function CustomerRow({
       </td>
       <td className="px-4 py-4">
         <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="rounded-md p-1 hover:bg-accent">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="hover:bg-accent rounded-md p-1">
             <MoreHorizontal className="h-4 w-4" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-7 z-10 w-44 rounded-md border border-border bg-card shadow-lg py-1">
-              <Link href={`/customers/${customer.id}`} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
+            <div className="border-border bg-card absolute right-0 top-7 z-10 w-44 rounded-md border py-1 shadow-lg">
+              <Link
+                href={`/customers/${customer.id}`}
+                className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+                onClick={() => setMenuOpen(false)}
+              >
                 View Profile
               </Link>
               {customer.status !== "VIP" && (
-                <button onClick={() => { onStatusChange("VIP"); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent">
+                <button
+                  onClick={() => {
+                    onStatusChange("VIP");
+                    setMenuOpen(false);
+                  }}
+                  className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+                >
                   <Star className="h-3.5 w-3.5 text-amber-500" /> Mark VIP
                 </button>
               )}
               {customer.status !== "ACTIVE" && (
-                <button onClick={() => { onStatusChange("ACTIVE"); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent">
+                <button
+                  onClick={() => {
+                    onStatusChange("ACTIVE");
+                    setMenuOpen(false);
+                  }}
+                  className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+                >
                   Set Active
                 </button>
               )}
               {customer.status !== "BLACKLISTED" && (
-                <button onClick={() => { onStatusChange("BLACKLISTED"); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10">
+                <button
+                  onClick={() => {
+                    onStatusChange("BLACKLISTED");
+                    setMenuOpen(false);
+                  }}
+                  className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 px-3 py-1.5 text-sm"
+                >
                   <ShieldOff className="h-3.5 w-3.5" /> Blacklist
                 </button>
               )}

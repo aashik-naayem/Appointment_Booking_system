@@ -4,10 +4,7 @@ import { requireTenant } from "@/lib/permissions";
 import { prisma } from "@bookflow/database";
 import { workingHoursSchema } from "@/lib/validations/staff";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireTenant();
     const { id } = await params;
@@ -23,14 +20,11 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await requireTenant();
     const { id } = await params;
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
     const { workingHours } = workingHoursSchema.parse(body);
 
     // Verify staff belongs to tenant

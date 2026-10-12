@@ -8,6 +8,13 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],
+    server: {
+      deps: {
+        // next-auth imports "next/server" without a file extension, which Node ESM
+        // cannot resolve; inlining lets Vite resolve it.
+        inline: ["next-auth", "@auth/core"],
+      },
+    },
     include: ["src/__tests__/**/*.test.ts", "src/__tests__/**/*.test.tsx"],
     exclude: ["node_modules", ".next", "e2e"],
     coverage: {

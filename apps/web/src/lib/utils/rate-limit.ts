@@ -62,6 +62,26 @@ function inMemoryRateLimit(
   };
 }
 
+type LimitResult = { success: boolean; remaining: number; reset: number };
+
+/**
+ * Run an Upstash limiter, but never let a Redis outage (bad credentials, network error)
+ * take sign-up / booking down: fall back to the in-memory limiter instead.
+ */
+async function runLimiter(
+  limiter: Ratelimit,
+  key: string,
+  fallback: () => LimitResult,
+): Promise<LimitResult> {
+  try {
+    const result = await limiter.limit(key);
+    return { success: result.success, remaining: result.remaining, reset: result.reset };
+  } catch (error) {
+    console.error("[rate-limit] Redis unavailable, using in-memory fallback:", error);
+    return fallback();
+  }
+}
+
 export async function checkBookingRateLimit(request: NextRequest): Promise<{
   success: boolean;
   remaining: number;
@@ -71,12 +91,7 @@ export async function checkBookingRateLimit(request: NextRequest): Promise<{
   const key = `booking:${ip}`;
 
   if (bookingRateLimit) {
-    const result = await bookingRateLimit.limit(key);
-    return {
-      success: result.success,
-      remaining: result.remaining,
-      reset: result.reset,
-    };
+    return runLimiter(bookingRateLimit, key, () => inMemoryRateLimit(key, 10, 60 * 60 * 1000));
   }
 
   return inMemoryRateLimit(key, 10, 60 * 60 * 1000);
@@ -91,12 +106,7 @@ export async function checkAuthRateLimit(request: NextRequest): Promise<{
   const key = `auth:${ip}`;
 
   if (authRateLimit) {
-    const result = await authRateLimit.limit(key);
-    return {
-      success: result.success,
-      remaining: result.remaining,
-      reset: result.reset,
-    };
+    return runLimiter(authRateLimit, key, () => inMemoryRateLimit(key, 5, 15 * 60 * 1000));
   }
 
   return inMemoryRateLimit(key, 5, 15 * 60 * 1000);
@@ -108,12 +118,9 @@ export async function checkApiRateLimit(apiKey: string): Promise<{
   reset: number;
 }> {
   if (apiRateLimit) {
-    const result = await apiRateLimit.limit(apiKey);
-    return {
-      success: result.success,
-      remaining: result.remaining,
-      reset: result.reset,
-    };
+    return runLimiter(apiRateLimit, apiKey, () =>
+      inMemoryRateLimit(`api:${apiKey}`, 1000, 60 * 60 * 1000),
+    );
   }
 
   return inMemoryRateLimit(`api:${apiKey}`, 1000, 60 * 60 * 1000);

@@ -12,12 +12,13 @@ function getKey(): Buffer {
   const key = process.env["ENCRYPTION_KEY"];
   if (!key) throw new Error("ENCRYPTION_KEY environment variable is not set");
 
-  // Ensure key is exactly 32 bytes
+  // AES-256 needs 32 bytes. Refuse short keys instead of silently zero-padding them,
+  // which would make the effective key far weaker than the operator expects.
   const keyBuffer = Buffer.from(key, "utf-8");
   if (keyBuffer.length < KEY_LENGTH) {
-    return Buffer.concat([keyBuffer, Buffer.alloc(KEY_LENGTH - keyBuffer.length)]);
+    throw new Error(`ENCRYPTION_KEY must be at least ${KEY_LENGTH} bytes long`);
   }
-  return keyBuffer.slice(0, KEY_LENGTH);
+  return keyBuffer.subarray(0, KEY_LENGTH);
 }
 
 export function encrypt(text: string): string {

@@ -10,7 +10,7 @@ import slugify from "slugify";
 export async function POST(request: NextRequest) {
   try {
     const ctx = await requireAuth();
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
     const input = createTenantSchema.parse(body);
 
     // Check if user already has a tenant
@@ -53,9 +53,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Create default business hours (Mon-Fri 9am-5pm)
-      const defaultHours = [
-        "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY",
-      ].map((day) => ({
+      const defaultHours = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"].map((day) => ({
         tenantId: newTenant.id,
         dayOfWeek: day as "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY",
         startTime: "09:00",
@@ -79,8 +77,20 @@ export async function POST(request: NextRequest) {
       await tx.notificationPreference.createMany({
         data: [
           { tenantId: newTenant.id, type: "BOOKING_CONFIRMATION", channel: "EMAIL", enabled: true },
-          { tenantId: newTenant.id, type: "BOOKING_REMINDER", channel: "EMAIL", enabled: true, hoursBeforeReminder: 24 },
-          { tenantId: newTenant.id, type: "BOOKING_REMINDER", channel: "EMAIL", enabled: true, hoursBeforeReminder: 2 },
+          {
+            tenantId: newTenant.id,
+            type: "BOOKING_REMINDER",
+            channel: "EMAIL",
+            enabled: true,
+            hoursBeforeReminder: 24,
+          },
+          {
+            tenantId: newTenant.id,
+            type: "BOOKING_REMINDER",
+            channel: "EMAIL",
+            enabled: true,
+            hoursBeforeReminder: 2,
+          },
           { tenantId: newTenant.id, type: "BOOKING_CANCELLATION", channel: "EMAIL", enabled: true },
           { tenantId: newTenant.id, type: "STAFF_NEW_BOOKING", channel: "EMAIL", enabled: true },
         ],
@@ -100,7 +110,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const { requireTenant, requireRole } = await import("@/lib/permissions");
     const ctx = await requireRole(UserRole.ADMIN);
-    const body = await request.json() as unknown;
+    const body = (await request.json()) as unknown;
     const input = updateTenantSchema.parse(body);
 
     const tenant = await prisma.tenant.update({

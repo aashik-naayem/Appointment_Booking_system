@@ -1,6 +1,6 @@
 /**
  * Google Calendar Integration
- * 
+ *
  * Handles OAuth connection and event synchronization.
  * All OAuth tokens are stored encrypted.
  */
@@ -33,10 +33,7 @@ export function getGoogleCalendarAuthUrl(staffId: string): string {
   });
 }
 
-export async function exchangeGoogleCalendarCode(
-  staffId: string,
-  code: string,
-): Promise<void> {
+export async function exchangeGoogleCalendarCode(staffId: string, code: string): Promise<void> {
   const { tokens } = await oauth2Client.getToken(code);
 
   if (!tokens.access_token) {
@@ -230,8 +227,6 @@ function buildCalendarEvent(appointment: {
       dateTime: appointment.endTime.toISOString(),
       timeZone: appointment.timezone,
     },
-    attendees: [
-      { email: appointment.customer.email, displayName: appointment.customer.name },
-    ],
+    attendees: [{ email: appointment.customer.email, displayName: appointment.customer.name }],
   };
 }

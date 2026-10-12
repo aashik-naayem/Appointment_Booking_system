@@ -18,18 +18,16 @@ export function DashboardHeader({ user, tenant }: Props) {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6">
+    <header className="border-border bg-background flex h-16 items-center justify-between border-b px-6">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">
-          {/* Breadcrumbs would go here */}
-        </span>
+        <span className="text-muted-foreground text-sm">{/* Breadcrumbs would go here */}</span>
       </div>
 
       <div className="flex items-center gap-3">
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-9 w-9 items-center justify-center rounded-md border transition-colors"
           aria-label="Toggle theme"
         >
           <Sun className="h-4 w-4 dark:hidden" />
@@ -38,7 +36,7 @@ export function DashboardHeader({ user, tenant }: Props) {
 
         {/* Notifications */}
         <button
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-9 w-9 items-center justify-center rounded-md border transition-colors"
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
@@ -47,7 +45,7 @@ export function DashboardHeader({ user, tenant }: Props) {
         {/* User menu */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+            <button className="border-border hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors">
               {user.image ? (
                 <Image
                   src={user.image}
@@ -57,31 +55,31 @@ export function DashboardHeader({ user, tenant }: Props) {
                   className="h-6 w-6 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold">
                   {user.name?.[0]?.toUpperCase() ?? "U"}
                 </div>
               )}
-              <span className="hidden sm:block max-w-32 truncate font-medium">
+              <span className="hidden max-w-32 truncate font-medium sm:block">
                 {user.name ?? user.email}
               </span>
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
             </button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
             <DropdownMenu.Content
-              className="z-50 min-w-48 rounded-md border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
+              className="border-border bg-popover animate-in fade-in-0 zoom-in-95 z-50 min-w-48 rounded-md border p-1 shadow-lg"
               align="end"
               sideOffset={4}
             >
-              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b border-border mb-1">
+              <div className="text-muted-foreground border-border mb-1 border-b px-2 py-1.5 text-xs font-medium">
                 {user.email}
               </div>
 
               <DropdownMenu.Item asChild>
                 <Link
                   href="/settings/profile"
-                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent transition-colors outline-none"
+                  className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors"
                 >
                   <User className="h-3.5 w-3.5" />
                   Profile
@@ -91,19 +89,19 @@ export function DashboardHeader({ user, tenant }: Props) {
               <DropdownMenu.Item asChild>
                 <Link
                   href="/settings"
-                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent transition-colors outline-none"
+                  className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors"
                 >
                   <Settings className="h-3.5 w-3.5" />
                   Settings
                 </Link>
               </DropdownMenu.Item>
 
-              <DropdownMenu.Separator className="my-1 h-px bg-border" />
+              <DropdownMenu.Separator className="bg-border my-1 h-px" />
 
               <DropdownMenu.Item asChild>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10 transition-colors outline-none"
+                  className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   Sign out

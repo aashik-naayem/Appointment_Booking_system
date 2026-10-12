@@ -61,11 +61,11 @@ const input = createBookingSchema.parse(body); // throws if invalid
 
 Two rate limiting strategies:
 
-| Endpoint | Limit | Window |
-|---------|-------|--------|
-| Booking creation | 10 requests | 1 hour per IP |
-| Authentication | 5 requests | 15 minutes per IP |
-| Public API | 1000 requests | 1 hour per API key |
+| Endpoint         | Limit         | Window             |
+| ---------------- | ------------- | ------------------ |
+| Booking creation | 10 requests   | 1 hour per IP      |
+| Authentication   | 5 requests    | 15 minutes per IP  |
+| Public API       | 1000 requests | 1 hour per API key |
 
 Redis (Upstash) with sliding window algorithm. Falls back to in-memory in development.
 
@@ -74,9 +74,9 @@ Redis (Upstash) with sliding window algorithm. Falls back to in-memory in develo
 ```typescript
 // Verify signature before processing
 const event = stripe.webhooks.constructEvent(
-  rawBody,        // must be raw Buffer, not parsed JSON
-  signature,      // from Stripe-Signature header
-  webhookSecret,  // STRIPE_WEBHOOK_SECRET env var
+  rawBody, // must be raw Buffer, not parsed JSON
+  signature, // from Stripe-Signature header
+  webhookSecret, // STRIPE_WEBHOOK_SECRET env var
 );
 ```
 
@@ -87,7 +87,7 @@ Idempotency prevents replay attacks — each `eventId` is recorded after process
 Google Calendar OAuth tokens are encrypted at rest using AES-256-GCM:
 
 ```typescript
-accessToken: encrypt(tokens.access_token)  // iv:authTag:ciphertext
+accessToken: encrypt(tokens.access_token); // iv:authTag:ciphertext
 ```
 
 Tokens are **never** returned to the client — only the connection status is exposed.

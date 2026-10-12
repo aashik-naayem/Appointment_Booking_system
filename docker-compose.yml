@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ============================================================
 # BookFlow — Local Development Stack
 # ============================================================
@@ -25,7 +23,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bookflow -d bookflow"]
       interval: 10s

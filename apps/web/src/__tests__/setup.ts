@@ -38,11 +38,12 @@ vi.mock("@bookflow/database", async () => {
       subscription: { findUnique: vi.fn(), updateMany: vi.fn() },
       customer: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
       $transaction: vi.fn((fn: unknown) => {
-        if (typeof fn === "function") return fn({
-          appointment: { create: vi.fn(), count: vi.fn() },
-          subscription: { updateMany: vi.fn() },
-          customer: { update: vi.fn() },
-        });
+        if (typeof fn === "function")
+          return fn({
+            appointment: { create: vi.fn(), count: vi.fn() },
+            subscription: { updateMany: vi.fn() },
+            customer: { update: vi.fn() },
+          });
         return Promise.all(fn as Promise<unknown>[]);
       }),
     },

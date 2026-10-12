@@ -5,6 +5,7 @@
 This is the simplest production setup.
 
 ### Services needed
+
 - **Vercel** — hosting
 - **Neon or Supabase** — PostgreSQL
 - **Upstash** — Redis
@@ -20,12 +21,14 @@ This is the simplest production setup.
 2. **Redis**: Create a Redis database on [Upstash](https://upstash.com).
 
 3. **Run migrations**:
+
    ```bash
    DATABASE_URL="postgresql://..." npx prisma migrate deploy
    DATABASE_URL="postgresql://..." npx prisma db seed
    ```
 
 4. **Deploy to Vercel**:
+
    ```bash
    npm i -g vercel
    vercel --prod

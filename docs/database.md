@@ -7,15 +7,19 @@ BookFlow uses PostgreSQL 16 with Prisma ORM. The schema is designed for multi-te
 ## Core Design Decisions
 
 ### Tenant Isolation
+
 Every business entity has a `tenantId` foreign key. All queries include `WHERE tenantId = ?`. There are no cross-tenant joins.
 
 ### Soft Deletes
+
 `Appointment`, `Service`, `Staff`, `Customer`, and `User` use soft deletes via `deletedAt`. Queries always filter `deletedAt: null`. This preserves historical data for analytics.
 
 ### Monetary Values
+
 All prices, amounts, and commissions use `DECIMAL` type — never `FLOAT`. Prisma maps these to JavaScript `Decimal` objects to avoid floating-point errors.
 
 ### UTC Storage
+
 All timestamps are stored in UTC. The `timezone` field on `Tenant` and `Appointment` is used for display-only formatting.
 
 ## Entity Relationships
