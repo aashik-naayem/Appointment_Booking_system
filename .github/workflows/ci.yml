@@ -87,7 +87,7 @@ jobs:
         working-directory: packages/database
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
-          DIRECT_URL: ${{ env.DIRECT_URL }}
+          DIRECT_URL: ${{ env.DATABASE_URL }}
 
       - name: Run unit tests
         run: npm run test -- --coverage
