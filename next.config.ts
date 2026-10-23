@@ -5,7 +5,12 @@ import type { NextConfig } from "next";
 // Load the single root-level .env.local for the whole monorepo
 // forceReload (4th arg) is required: Next has already run loadEnvConfig for apps/web, and @next/env
 // caches that result, so a plain call here silently skips the root .env.local.
-loadEnvConfig(path.resolve(__dirname, "../../"), process.env.NODE_ENV !== "production", undefined, true);
+loadEnvConfig(
+  path.resolve(__dirname, "../../"),
+  process.env.NODE_ENV !== "production",
+  undefined,
+  true,
+);
 
 // Placeholder values from .env.example (e.g. "your-google-client-id") do not count as configured.
 const isReal = (v?: string) => !!v && v.trim() !== "" && !/(\.\.\.|your-|changeme)/i.test(v);
